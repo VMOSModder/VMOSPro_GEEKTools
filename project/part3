@@ -1,0 +1,34 @@
+#!/system/bin/sh
+filename="$(basename $0)"
+abort(){
+echo "$1";exit 1
+}
+if [ "${filename%.*}" == "uninstall" ]; then
+[ -f "/init.real" ] || abort "! Cannot find backup stock boot init"
+echo "- Restore stock boot init..."
+rm -rf /init
+mv -f /init.real /init
+chmod 777 /init
+echo "- Remove tool files..."
+rm -rf /tool_files
+rm -rf /sbin/tool
+cp /init.rc.orig /init.rc
+echo "- Uninstall done!"
+exit
+fi
+mkdir -p /cache/.tmp/vmostool 2>/dev/null
+cd /cache/.tmp/vmostool 2>/dev/null
+rm -rf /cache/.tmp/vmostool/init 2>/dev/null
+mod_prop(){
+NAME=$1; VARPROP=$2; FILE="$DIRNAME/$3"; [ ! "$FILE" ] && FILE=$DIRNAME/tool_files/system.prop
+touch $FILE 2>/dev/null && echo "" >> $FILE
+echo "$NAME=$VARPROP" | while read prop; do export newprop=$(echo ${prop} | cut -d '=' -f1); sed -i "/${newprop}/d" $FILE; echo $prop >> $FILE; done 2>/dev/null
+}
+del_prop(){
+NAME=$1; FILE="$DIRNAME/$2"; [ ! "$FILE" ] && FILE=$DIRNAME/tool_files/system.prop
+noneprop="$NAME="
+nonepropn="$noneprop\n"
+sed -i "/${nonepropn}/d" $FILE 2>/dev/null
+sed -i "/${noneprop}/d" $FILE 2>/dev/null
+}
+

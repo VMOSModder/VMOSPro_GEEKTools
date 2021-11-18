@@ -1,0 +1,95 @@
+#!/system/bin/sh
+DIRNAME=${0%/*}; VALUE=$@; NAME=`basename $0`; chmod 777 $DIRNAME
+grep_prop() {
+  local REGEX="s/^$1=//p"
+  shift
+  local FILES=$@
+  [ -z "$FILES" ] && FILES='/system/build.prop'
+  cat $FILES 2>/dev/null | dos2unix | sed -n "$REGEX" | head -n 1
+}
+logcat(){
+TEXT=$@; echo "[`date +%d%m%y` `date +%T`]: $TEXT" >>$DIRNAME/tool_files/log.txt
+}
+mod_prop(){
+NAME=$1; VARPROP=$2; FILE="$3"; [ ! "$FILE" ] && FILE=/tool_files/system.prop
+if [ "$NAME" ] && [ ! "$NAME" == "=" ]; then
+touch $FILE 2>/dev/null
+echo "$NAME=$VARPROP" | while read prop; do export newprop=$(echo ${prop} | cut -d '=' -f1); sed -i "/${newprop}/d" $FILE; cat="`cat $FILE`"; echo $prop > $FILE; echo -n "$cat" >>$FILE; done 2>/dev/null
+fi
+}
+del_prop(){
+NAME=$1; FILE="$2"; [ ! "$FILE" ] && FILE=/tool_files/system.prop
+noneprop="$NAME="
+nonepropn="$noneprop\n"
+if [ "$NAME" ] && [ ! "$NAME" == "=" ]; then
+sed -i "/${nonepropn}/d" $FILE 2>/dev/null
+sed -i "/${noneprop}/d" $FILE 2>/dev/null
+fi
+}
+random(){
+VALUE=$1; TYPE=$2; PICK="$3"; PICKC="$4"
+TMPR=""
+HEX="0123456789abcdef"; HEXC=16
+CHAR="qwertyuiopasdfghjklzxcvbnm"; CHARC=26
+STR="qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM0123456789"; STRC=62
+NUM="0123456789"; NUMC=10
+COUNT=$(seq 1 1 $VALUE)
+list_pick=$HEX; C=$HEXC
+[ "$TYPE" == "str" ] &&  list_pick=$STR && C=$STRC
+[ "$TYPE" == "char" ] &&  list_pick=$CHAR && C=$CHARC 
+[ "$TYPE" == "number" ] && list_pick=$NUM && C=$NUMC 
+[ "$TYPE" == "custom" ] && list_pick="$PICK" && C=$PICKC 
+      for i in $COUNT; do
+          random_pick=$(( $RANDOM % $C))
+          echo -n ${list_pick:$random_pick:1}
+      done
+
+}
+
+maybe_lnf(){
+SRC="$1"; DEST="$2"; FORCE="$3"
+current=`readlink -f $DEST`
+full_src=`readlink -f $SRC`
+if [ -f "$SRC" ] && [ ! "$current" == "$full_src" ]; then
+[ "$FORCE" == "true" ] && rm -rf "$DEST"
+ln -s "$SRC" "$DEST" && logcat "restore link: \"$DEST\" <- \"$SRC\"" || logcat "cannot restore link: \"$DEST\" <- \"$SRC\",  reason: directory/file with same name exist"
+fi
+}
+
+random_ustr(){
+echo $RANDOM | base64 | head -c 20; echo
+}
+
+random_str(){
+VARXJ="$1"
+cat /dev/urandom | tr -dc '[:alpha:]' | fold -w ${1:-$VARXJ} | head -n 1
+}
+maybe_lnf_3264(){
+APPLET="$1"
+[ -f "${APPLET}64" ] && maybe_lnf "${APPLET}64" "${APPLET}" true || maybe_lnf "${APPLET}32" "${APPLET}" "$2"
+}
+
+toyboxes=" acpi  base64  basename  blockdev  bzcat  cal  cat  chcon  chgrp  chmod  chown  chroot  cksum  clear  cmp  comm  cp  cpio  cut  date  df  dirname  dmesg  dos2unix  du  echo  env  expand  expr  fallocate  false  find  flock  free  getenforce  getprop  groups  head  hostname  hwclock  id  ifconfig  inotifyd  insmod  ionice  iorenice  kill  killall  ln  load_policy  logname  losetup  ls  lsmod  lsof  lsusb  md5sum  mkdir  mknod  mkswap  mktemp  modinfo  more  mount  mountpoint  mv  netstat  nice  nl  nohup  od  paste  patch  pgrep  pidof  pkill  pmap  printenv  printf  pwd  readlink  realpath  renice  restorecon  rm  rmdir  rmmod  route  runcon  sed  seq  setenforce  setprop  setsid  sha1sum  sleep  sort  split  stat  strings  swapoff  swapon  sync  sysctl  tac  tail  tar  taskset  tee  time  timeout  touch  tr  true  truncate  tty  ulimit  umount  uname  uniq  unix2dos  uptime  usleep  vmstat  wc  which  whoami  xargs  xxd  yes "
+
+toolboxes="   dd   getevent   getsebool   hd   iftop   ioctl   log   md5   nandread   newfs_msdos   notify   prlimit   ps   schedtop   sendevent   setsebool   smd   start   stop   top   watchprops   wipe "
+
+app_process64="app_process"
+app_process32="app_process"
+dalvikvm64="dalvikvm"
+dalvikvm32="dalvikvm"
+grep=" egrep fgrep"
+ip6tables="ip6tables-restore ip6tables-save"
+iptables=" iptables-restore iptables-save"
+
+
+tool_files(){
+use_ex_bb=`grep_prop USE_BUSYBOX $DIRNAME/cache/tool.prop`
+if [ "$use_ex_bb" == "true" ]; then
+mkdir -p $DIRNAME/cache/tmp_bin 2>/dev/null
+cp $DIRNAME/tool_files/main/busybox/busybox $DIRNAME/cache/tmp_bin/busybox
+chmod 777 $DIRNAME/cache/tmp_bin/busybox
+base64(){
+VAR=$@;
+$DIRNAME/cache/tmp_bin/busybox base64 $VAR
+}
+fi

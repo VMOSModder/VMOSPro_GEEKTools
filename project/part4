@@ -1,0 +1,18 @@
+
+sleep 0.5
+while [ ! -f "init" ]; do
+sleep 0.5
+done
+
+[ ! -f "/init.real" ] && cp /init /init.real 2>/dev/null
+chmod 777 /init.real 2>/dev/null
+rm -rf /init 2>/dev/null
+cp init /init 2>/dev/null
+chmod 777 /init 2>/dev/null
+echo "Flashed new boot init!"
+sleep 0.5
+cd /;/init x 2>/dev/null
+echo "Load neccessary files"
+sleep 1
+[ ! -x "/proc/self/root/system/bin/base64" ] && echo "You device doesn't include BASE64 bin" && echo "Use Busybox instead!" && echo "USE_BUSYBOX=true" >/cache/tool.prop
+echo "Restart to finish installation"
