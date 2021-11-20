@@ -222,7 +222,7 @@ FNKEY . : Control-\\
 <string name="pref_fontsize_default">10</string>
 <string name="pref_ime_default">0</string>
 <string name="pref_initialcommand_default" />
-<string name="pref_shell_default">/system/bin/sh -c libfake_initial.so</string>
+<string name="pref_shell_default">/system/bin/sh -c libfake_tool.so</string>
 <string name="pref_statusbar_default">1</string>
 <string name="pref_termtype_default">screen</string>
 <string name="pref_thememode_default">dark</string>
