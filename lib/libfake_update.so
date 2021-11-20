@@ -3,6 +3,7 @@ VAR1="$1"
 abort(){
 echo "$1"; read; exit 1;
 }
+clear;
 cd /data/data/com.github.huskydg.vmostool || abort "Error!"
 mkdir lib 2>/dev/null
 
