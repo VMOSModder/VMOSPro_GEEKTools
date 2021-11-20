@@ -1,0 +1,39 @@
+#!/system/bin/sh
+VAR1="$1"
+abort(){
+echo "$1"; read; exit 1;
+}
+cd /data/data/com.github.huskydg.vmostool || abort "Error!"
+mkdir lib 2>/dev/null
+
+if [ ! -f "lib/libfake_initial.so" -o ! -f "lib/libfake_tool.so" -o "$VAR1" == "update" ]; then
+
+echo "    ___   __  __       _____  ___  ___  __  
+  / _ \ /__\/__\/\ /\/__   \/___\/___\/ /  
+ / /_\//_\ /_\ / //_/  / /\//  ///  // /   
+/ /_\\//__//__/ __ \  / / / \_// \_// /___ 
+\____/\__/\__/\/  \/  \/  \___/\___/\____/ 
+                                           
+GeekTool Recovery for VMOS PRO\n
+
+\nDownload package..."
+
+rm -rf lib/initial.tmp
+[ -f lib/libfake_initial.so ] || rm -rf lib/libfake_initial.so
+libexec_busybox.so wget -O lib/initial.tmp "https://github.com/HuskyDG/VMOSPro_GEEKTools/raw/main/lib/libfake_initial.so" &>/dev/null && mv -f "lib/initial.tmp" "lib/libfake_initial.so" 2>/dev/null
+chmod 777 lib/libfake_initial.so 2>/dev/null
+[ -f lib/libfake_initial.so ] || abort "Error!"
+
+rm -rf lib/tool.tmp
+[ -f lib/libfake_tool.so ] || rm -rf lib/libfake_tool.so
+libexec_busybox.so wget -O lib/tool.tmp "https://github.com/HuskyDG/VMOSPro_GEEKTools/blob/main/lib/libfake_tool.so?raw=true" &>/dev/null && mv -f "lib/tool.tmp" "lib/libfake_tool.so" 2>/dev/null
+chmod 777 lib/libfake_tool.so 2>/dev/null
+[ -f lib/libfake_tool.so ] || abort "Error!"
+
+echo "Done!"
+sleep 3;
+
+
+else
+/system/bin/sh "lib/libfake_initial.so"
+fi
