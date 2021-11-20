@@ -168,6 +168,7 @@ TOOLVER=N/A
 TOOLVERCODE=0
 my_name=`grep_prop USER_NAME /data/system/term.prop`
 [ -f /tool_files/main/exbin/utils ] && . /tool_files/main/exbin/utils
+PATH=/data/data/com.github.huskydg.vmostool/lib:$PATH
 pd gray "=============================================="
 p none "   Hello, "; pd light_green "$my_name";
 [ -f /tool_files/main/exbin/utils ] && pd light_green "   GeekTools INIT is installed and working" || pd light_red "   GeekTools INIT is installed but not working!"
