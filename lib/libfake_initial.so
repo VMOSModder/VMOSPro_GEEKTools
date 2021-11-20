@@ -5,8 +5,8 @@ priv_dir=/data/data/com.github.huskydg.vmostool
 
 
 
-TOOLVERAPP=2.4
-TOOLVERCODEAPP=20400
+TOOLVERAPP=2.4.1
+TOOLVERCODEAPP=20401
 
 p(){
 COLOR=$1;TEXT="$2";escape="$1"
@@ -168,7 +168,6 @@ TOOLVER=N/A
 TOOLVERCODE=0
 my_name=`grep_prop USER_NAME /data/system/term.prop`
 [ -f /tool_files/main/exbin/utils ] && . /tool_files/main/exbin/utils
-PATH=/data/data/com.github.huskydg.vmostool/lib:$PATH
 pd gray "=============================================="
 p none "   Hello, "; pd light_green "$my_name";
 [ -f /tool_files/main/exbin/utils ] && pd light_green "   GeekTools INIT is installed and working" || pd light_red "   GeekTools INIT is installed but not working!"
@@ -188,6 +187,7 @@ if [ "$option" == "1" ]; then
     /tool_files/binary/tool
 elif [ "$option" == "2" ]; then
     lib/libfake_update.so update
+    exec lib/libfake_initial.so
 elif [ "$option" == "3" ]; then
     cd /; clear;
      /system/bin/sh - 
@@ -285,6 +285,7 @@ if [ "$option" == "1" ]; then
    install_geektool
 elif [ "$option" == "2" ]; then
     lib/libfake_update.so update
+    exec lib/libfake_initial.so
 elif [ "$option" == "3" ]; then
    cd /; clear;
    /system/bin/sh - 
@@ -306,7 +307,7 @@ link libexec-t1plus.so
 link libexeo-t1plus.so
 link libterm-system.so
 link libfake_update.so
-link libexec_busybox.so
+
 rm -rf files/opt/*.dex 2>/dev/null
 if [ ! "$huskydg" == "true" ]; then
   while true; do main_noinit; done;
