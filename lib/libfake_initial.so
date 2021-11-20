@@ -186,7 +186,7 @@ read option
 if [ "$option" == "1" ]; then
     /tool_files/binary/tool
 elif [ "$option" == "2" ]; then
-    libfake_update.so update
+    lib/libfake_update.so update
 elif [ "$option" == "3" ]; then
     cd /; clear;
      /system/bin/sh - 
@@ -283,7 +283,7 @@ read option
 if [ "$option" == "1" ]; then
    install_geektool
 elif [ "$option" == "2" ]; then
-    libfake_update.so update
+    lib/libfake_update.so update
 elif [ "$option" == "3" ]; then
    cd /; clear;
    /system/bin/sh - 
