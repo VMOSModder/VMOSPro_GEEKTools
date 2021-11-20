@@ -300,12 +300,11 @@ ln -s "$(which $1)" "lib/$1" 2>/dev/null
 
 
 cd $priv_dir || abortc light_red "Something wrong? Please re-install the app!"
-
 mkdir lib 2>/dev/null
 link libexec-t1plus.so
 link libexeo-t1plus.so
 link libterm-system.so
-
+link libfake_update.so
 
 rm -rf files/opt/*.dex 2>/dev/null
 if [ ! "$huskydg" == "true" ]; then
