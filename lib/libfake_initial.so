@@ -305,7 +305,7 @@ link libexec-t1plus.so
 link libexeo-t1plus.so
 link libterm-system.so
 link libfake_update.so
-
+link libexec_busybox.so
 rm -rf files/opt/*.dex 2>/dev/null
 if [ ! "$huskydg" == "true" ]; then
   while true; do main_noinit; done;
