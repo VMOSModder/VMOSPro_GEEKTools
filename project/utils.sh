@@ -32,18 +32,12 @@ condition="$@"
 
 
 
-install_mod(){
-( ZIPFILE="$1"
-current_pid="$$"
-name=$2;
-[ ! "$name" ] && name=`random 10`;
-ZIPFILE="$(readlink -f "$ZIPFILE")"
-rm -rf "/system_root/dev/vm-geektool/$current_pid/"
-mkdir -p "/system_root/dev/vm-geektool/$current_pid/"
-echo "$ZIPFILE" >>/system_root/dev/vm-geektool/$current_pid/zip
-until isf "/system_root/dev/vm-geektool/$current_pid/.done"; do
-sleep 0.5
-done )
+mod_prop(){
+NAME=$1; VARPROP=$2; FILE="$3"; [ ! "$FILE" ] && FILE=$tp/system.prop
+if [ "$NAME" ] && [ ! "$NAME" == "=" ]; then
+touch $FILE 2>$no
+echo "$NAME=$VARPROP" | while read prop; do export newprop=$(echo ${prop} | cut -d '=' -f1); sed -i "/${newprop}/d" $FILE; cat="`cat $FILE`"; echo $prop > $FILE; echo -n "$cat" >>$FILE; done 2>$no
+fi
 }
 
 
@@ -260,6 +254,6 @@ ABILONG=`grep_prop ro.product.cpu.abi`
 get_abi
 }
 
-TOOLVERCODE=20401
-TOOLVER=2.4.1
+TOOLVERCODE=20402
+TOOLVER=2.4.2
 
