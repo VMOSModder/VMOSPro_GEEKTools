@@ -55,11 +55,11 @@ export PATH=/tool_files/main/exbin
 
 
 install_mod(){
-( ZIPFILE="$1"
+( ZIPFILE="/$1"
 current_pid="$$"
 name=$2;
 [ ! "$name" ] && name=`random 10`;
-ZIPPATH="$(realpath "$ZIPFILE")"
+ZIPPATH="$(realpath "$ZIPFILE")" || ZIPPATH="$(readlink -f "$ZIPFILE")" || ZIPPATH="$ZIPFILE"
   ZIPFILE="$ZIPPATH"
 rm -rf "/system_root/dev/vm-geektool/$current_pid/"
 mkdir -p "/system_root/dev/vm-geektool/$current_pid/"
@@ -260,6 +260,6 @@ ABILONG=`grep_prop ro.product.cpu.abi`
 get_abi
 }
 
-TOOLVERCODE=20400
-TOOLVER=2.4
+TOOLVERCODE=20401
+TOOLVER=2.4.1
 
