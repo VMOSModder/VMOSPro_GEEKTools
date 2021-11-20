@@ -86,6 +86,7 @@ install_mod_process(){
 ( [ ! -f "/sbin/sh" ] && ln -s /system/bin/sh /sbin/sh 2>/dev/null
 zip=$1; bb=/tool_files/main/busybox/busybox;
 name=$2;
+zip_path="$(readlink "$zip")" || zip_path="$zip"
 [ ! "$name" ] && name=`random 10`;
 TMPDIR=$WDIR/flash/$name
 
@@ -107,9 +108,8 @@ pd gray "=============================================="
   cd $TMPDIR 2>/dev/null
   
   if [ ! -f "$UPDATEBIN" ]; then
-      echo "- Install zip by using default installer..."
-      mkdir -p $TMPDIR/META-INF/com/google/android
-      cp $MDIR/flash.sh $TMPDIR/META-INF/com/google/android/update-binary 2>/dev/null
+      pd red "Invalid zip!"
+      exit 1
       
   fi
   chmod 777 "$UPDATEBIN" 2>/dev/null
@@ -186,6 +186,163 @@ pd red "Please install Shizuku first!"
 fi
 }
 
+install_subinary(){
+VAR1="$1"
+mkdir -p /system_root/dev/vm-geektool/$$
+echo "$VAR1" >/system_root/dev/vm-geektool/$$/root
+until [ -f "/system_root/dev/vm-geektool/$$/.done" ]; do
+sleep 0.1
+done
+}
+
+
+daemonsu_start(){
+TRIGGER="$1"
+print_title "FLASHING..."
+if [ "$TRIGGER" == "uninstall" ]; then
+echo "Use GeekTool daemon!"
+sleep 1;
+echo "Removing SU binary..."
+  FILES="
+$tp/binary/daemonsu
+$tp/binary/su
+$tp/binary/sx
+/sbin/daemonsu
+/sbin/su
+/sbin/sx
+/sbin/sx
+/sbin/ku.sud
+/sbin/ksud
+/system/xbin/daemonsu
+/system/xbin/su
+/system/xbin/sx
+/system/xbin/sx
+/system/xbin/ku.sud
+/system/xbin/ksud
+/system/bin/daemonsu
+/system/bin/su
+/system/bin/sx
+/system/bin/ku.sud
+/system/bin/ksud
+/vendor/bin/daemonsu
+/vendor/bin/su
+/vendor/bin/sx
+/vendor/bin/ku.sud
+/vendor/bin/ksud
+/system/priv-app/SUMASTERZ
+/system_root/system/priv-app/UniversalHide
+/system_root/system/app/UniversalHide
+$tpw/suhide.sh
+/system/app/superuser.apk"
+mod_prop enforce_suhide false $tpm/root/module.prop 2>$no
+  for file in $FILES; do
+         ( rm -rf $file 2>$no && echo "  removed: $file" ) &
+  done
+        rm -rf /data/local/librootcloak.so 2>$no
+        rm -rf /data/local/rootcloak-wrapper.sh 2>$no
+        rm -rf /system_root/system/priv-app/UniversalHide 2>$no
+  rm disable 2>$no
+  rm fix 2>$no
+echo "Uninstall superuser app..."
+pm path com.koushikdutta.superuser | while read obt; do
+apppath="${obt: 8}"; basedir="${apppath%/*}"
+rm -rf "$basedir" 2>$no
+break
+done
+
+pm path com.koushikdutta.sumasterz | while read obt; do
+apppath="${obt: 8}"; basedir="${apppath%/*}"
+rm -rf "$basedir" 2>$no
+break
+done
+
+pm uninstall com.koushikdutta.superuser &>$no
+pm uninstall com.koushikdutta.sumasterz &>$no
+
+
+  if [ -f /system/app/superuser/superuser.apk ]; then
+      rm -rf /system_root/system/app/superuser 2>$no
+  fi
+SUBIN=""
+ENVPATH="/system/bin /system/xbin /system/sbin /vendor/bin /sbin"
+for e in $ENVPATH; do
+[ -f "$e/daemonsu" ] && SUBIN="$e/daemonsu"
+done
+if [ ! "$SUBIN" ]; then
+  logcat "disable root"
+  pd green "Done!"
+pd gray "=============================================="
+  echo "System is rebooting to apply changes"
+         sleep 3; wboot
+else
+  pd red "Failed!"
+pd gray "=============================================="
+  pd red "Cannot unroot. Read-only system!"
+fi
+
+else
+
+if [ "$(getprop ro.product.cpu.abi)" == "arm64-v8a" ]; then
+    bit_ex="_64"
+ fi
+echo "Use GeekTool daemon!"
+SDK=$(getprop ro.build.version.sdk)
+echo "Installing su binary..."
+SUNAME="su_$SDK${bit_ex}${fix_ex}"
+SUNAME10="su10_$SDK${bit_ex}${fix_ex}"
+unzip -o "$tpm/root/subinary" "$SUNAME" "$SUNAME10" -d "$tpm/root" &>$no
+rm -rf $tp/binary/daemonsu
+rm -rf $tp/binary/daemonsu_10
+mv -f "$tpm/root/$SUNAME" "$tp/binary/daemonsu"
+mv -f "$tpm/root/$SUNAME10" "$tp/binary/daemonsu_10"
+chmod 777 /tool_files/binary/daemonsu
+chmod 777 /tool_files/binary/daemonsu_10
+if [ ! -f "/tool_files/binary/daemonsu" ]; then
+    
+    pd red "Installation failed" && logcat "enable root: failed daemonsu not found"
+else
+    
+    FILES="/tool_files/binary/su /tool_files/binary/sx"
+    for file in $FILES; do
+        if [ ! -f "$file" ]; then
+            ln -s daemonsu $file 2>$no
+        fi
+    done
+    echo "Set up permissions..."
+    FILES="/tool_files/binary/daemonsu /tool_files/binary/ksud /tool_files/binary/ku.sud"
+    for file in $FILES; do
+        if [ -f "$BOOTDIR$file" ]; then
+            chmod 777 $BOOTDIR$file 2>$no
+        fi
+    done
+    echo "Set up superuser app..."
+    mkdir -p $tp/binary/.superuser
+    unzip -o "$tpm/root/subinary" "superuser.apk" "suhide.apk" -d "$tp/binary/.superuser" &>/dev/null
+    pm uninstall com.koushikdutta.superuser &>$no
+    pm uninstall com.koushikdutta.sumasterz &>$no
+    rm -rf /system/priv-app/SUMASTERZ
+    mkdir -p /system/priv-app/SUMASTERZ
+    ln -s $tp/binary/.superuser/superuser.apk /system/priv-app/SUMASTERZ/SUMASTERZ.apk
+    
+    rm -rf /system/priv-app/UniversalHide
+    mkdir -p /system/priv-app/UniversalHide
+    unzip -o "$tp/binary/.superuser/suhide.apk" 'lib/*' -d /system/priv-app/UniversalHide &>$no
+        mv -f "/system/priv-app/UniversalHide/lib/arm64-v8a" "/system/priv-app/UniversalHide/lib/arm64" 2>$no
+        mv -f "/system/priv-app/UniversalHide/lib/armeabi-v7a" "/system/priv-app/UniversalHide/lib/arm" 2>$no
+        ln -s $tp/binary/.superuser/suhide.apk /system_root/system/priv-app/UniversalHide/UniversalHide.apk 2>$no
+        rm -rf $tpw/suhide.sh 2>$no
+       echo "#!/system/bin/sh\n#Custom command for apps in hidelist\n" >$tpw/suhide.sh
+    echo "Launch new daemon su..."
+    touch $tp/.launch_daemonsu
+    pd green "Done!"
+    logcat "enable root: done"
+    mod_prop type superuser $tpm/root/module.prop 2>$no
+pd gray "=============================================="
+    echo "System is rebooting to apply changes"
+    sleep 3; wboot
+fi
+fi
+}
 
 
 full_install(){
@@ -362,38 +519,6 @@ fi
 
 
 install_utils(){
-
-( echo "IyEvc3lzdGVtL2Jpbi9zaAoKIyMjIyMjIyMjIyMjIyMjIyMjIyMKIyBJTlNUQUxMIFNDUklQVCBG
-b3IgVk1PU1RPT0wKIyMjIyMjIyMjIyMjIyMjIyMjIyMKCi4gL3Rvb2xfZmlsZXMvbWFpbi9leGJp
-bi91dGlscwpaSVBGSUxFPSQzOwojIyMjIyMjIyMjIyMjIyMjIyMjIyMjCiMgQ29uZmlnIChCZWZv
-cmUpCiMjIyMjIyMjIyMjIyMjIyMjIyMjIyMKdW56aXAgLW8gIiRaSVBGSUxFIiAnY29uZmlnLnNo
-JyAtZCAuLyAmPi9kZXYvbnVsbAogLiAuL2NvbmZpZy5zaCAiJFpJUEZJTEUiCkJPT1RESVI9L3Rv
-b2xfZmlsZXMvd29yay8uYm9vdApjYXQgPDw8IiRSRU1PVkVfTElTVCIgfCB3aGlsZSByZWFkIGZp
-bGU7IGRvIGVjaG8gIiRmaWxlIiA+PiRCT09URElSL2RlbGV0ZS5saXN0OyBkb25lCmlmIFsgISAi
-JElHTk9SRV9QTEFDRSIgPT0gInRydWUiIF07IHRoZW4KICAgIGVjaG8gIi0gUGxhY2luZyBzeXN0
-ZW0gZmlsZXMuLi4iCiAgICB1bnppcCAtbyAiJFpJUEZJTEUiICdzeXN0ZW0vKicgLWQgIi9wcm9j
-L3NlbGYvcm9vdC8kKGdldHByb3Agcm8uaHVza3lkZy5yb290ZnMpLyRCT09URElSIiAmPi9kZXYv
-bnVsbApmaQppZiBbICIkVkVSU0lPTiIgPT0gIjIiIF07IHRoZW4KICAgIHVuemlwIC1vICIkWklQ
-RklMRSIgJ2NvbW1vbi8qJyAtZCAiLi8iICY+L2Rldi9udWxsCiAgICBpZiBbICIkUE9TVEZTREFU
-QSIgXTsgdGhlbgogICAgICAgIGVjaG8gIi0gU2V0IHVwIHBvc3QtZnMtZGF0YSBzY3JpcHQuLi4i
-CiAgICAgICAgY3AgLi9jb21tb24vcG9zdC1mcy1kYXRhLnNoICIvdG9vbF9maWxlcy93b3JrL3Nj
-cmlwdC9wb3N0LWZzLWRhdGEuZC8kUE9TVEZTREFUQSIKICAgIGZpCiAgICBpZiBbICIkTEFURVNU
-QVJUIiBdOyB0aGVuCiAgICAgICAgZWNobyAiLSBTZXQgdXAgbGF0ZV9zdGFydCBzZXJ2aWNlIHNj
-cmlwdC4uLiIKICAgICAgICBjcCAuL2NvbW1vbi9zZXJ2aWNlLnNoICIvdG9vbF9maWxlcy93b3Jr
-L3NjcmlwdC9sYXRlX3N0YXJ0LmQvJExBVEVTVEFSVCIKICAgIGZpCmVsc2UKICAgIGlmIFsgIiRQ
-T1NURlNEQVRBIiBdOyB0aGVuCiAgICAgICAgZWNobyAiLSBTZXQgdXAgcG9zdC1mcy1kYXRhIHNj
-cmlwdC4uLiIKICAgICAgICB1bnppcCAtbyAiJFpJUEZJTEUiICckUE9TVEZTREFUQScgLWQgIi4v
-IiAmPi9kZXYvbnVsbAogICAgICAgIGNwIC4vIiRQT1NURlNEQVRBIiAiL3Rvb2xfZmlsZXMvd29y
-ay9zY3JpcHQvcG9zdC1mcy1kYXRhLmQvJFBPU1RGU0RBVEEiCiAgICBmaQogICAgaWYgWyAiJExB
-VEVTVEFSVCIgXTsgdGhlbgogICAgICAgIHVuemlwIC1vICIkWklQRklMRSIgJyRMQVRFU1RBUlQn
-IC1kICIuLyIgJj4vZGV2L251bGwKICAgICAgICBlY2hvICItIFNldCB1cCBsYXRlX3N0YXJ0IHNl
-cnZpY2Ugc2NyaXB0Li4uIgogICAgICAgIGNwIC4vIiRMQVRFU1RBUlQiICIvdG9vbF9maWxlcy93
-b3JrL3NjcmlwdC9sYXRlX3N0YXJ0LmQvJExBVEVTVEFSVCIKICAgIGZpCmZpCiMjIyMjIyMjIyMj
-IyMjIyMjIyMjCiMgQ3VzdG9tIFNjcmlwdCAoQWZ0ZXIpCiMjIyMjIyMjIyMjIyMjIyMjIyMjCnVu
-emlwIC1vICIkWklQRklMRSIgJ2NvbmZpZy5zaCcgLWQgIi4vIiAmPi9kZXYvbnVsbAppZiBbIC1m
-IGN1c3RvbS5zaCBdOyB0aGVuCiAgLiAuL2N1c3RvbS5zaCAiJFpJUEZJTEUiCmZpCgojIyMjIyMj
-IyMjIyMjIyMjIyMjIwojIyMjIyMjIyMjIyMjIyMjIyMjIwplY2hvICItIERvbmUhIg==
-" | base64 -d ) >$tpm/flash.sh
 chmod 777 $tpm/exbin/utils
 }
 
@@ -561,7 +686,7 @@ else
  pd light_red "Normal access"
 fi
 p none "User space: ";pd orange "$stname"
-[ "$(getprop ro.huskydg.geektool)" -lt "$TOOLVERCODE" ] && pd red "Please restart the virtual machine"
+[ "$(getprop ro.huskydg.geektool)" -lt "$TOOLVERCODE" ] && ( pd red "Old daemon version is running!!"; sleep 3 ) && exit;
 pd gray "=============================================="
 }
 
@@ -1293,21 +1418,20 @@ print_screen_r(){
    echo "PATH: $SUBIN"
    pd gray "=============================================="
    if [ "$($SUBIN -v)" == "16 com.koushikdutta.superuser" ]; then
-       echo "  1 - Hide the Superuser app"
-       pd gray "      This also fix Superuser crash problem"
+       echo "  1 - Replace SU Binary"
+       pd gray "      The current package ia no longer supported"
    else
-       echo "  1 - Un-hide Superuser app"
+       echo "  1 - Reinstall SU Binary"
        pd gray "      Restore Superuser package"
    fi
-       p none "  2 - Enforce SUHide "; [ "$(grep_prop enforce_suhide $tpm/root/module.prop)" == "true" ] && pd light_green "Enabled" || pd light_red "Disabled";
-       pd gray "      Hide root access from apps"
-   echo "  3 - Remove SU"
+       
+   echo "  2 - Remove SU Binary / Unroot"
        pd gray "      Completely uninstall ROOT from system"
-   echo "  4 - Root checker"
+   echo "  3 - Root checker"
        pd gray "      Check if SU is running correctly"
-   echo "  5 - Launch daemon SU manually"
+   echo "  4 - Launch daemon SU manually"
        pd gray "      Try to run new process if SU is not running"
-   p none "  6 - Enhanced mode for SUHide "; [ "$(getprop persist.geektool.advsuhide)" == "1" ] && pd light_green "Enabled" || pd light_red "Disabled";
+   p none "  5 - Enhanced mode for SUHide "; [ "$(getprop persist.geektool.advsuhide)" == "1" ] && pd light_green "Enabled" || pd light_red "Disabled";
        pd gray "      Enable if apps still detect root"
 
 p none "[CHOICE]: "
@@ -1318,89 +1442,11 @@ p none "$print_screen_r"
  fi
 
 if [ "$OPTR" == "1" ]; then
-    clear
-    pd gray "=============================================="
-    echo "  FLASHING..."
-    pd gray "=============================================="
     
-            if [ "$($SUBIN -v)" == "16 com.koushikdutta.superuser" ]; then
-        echo "Replacing files..."
+            
+        install_subinary
+   
         
-        chmod 777 /sbin/daemonsu 2>$no
-        rm -rf fix 2>$no
-        touch fix 2>$no
-        if [ $SDK == 25 ]; then
-            if [ "$AARCH" == "arm64-v8a" ]; then
-                echo "Install for Android: 7.1 64bit"
-                cp bin/su_25_64_fix $SUBASE/daemonsu 2>$no
-            else
-                echo "Install for Android: 7.1 32bit"
-                cp bin/su_25_fix $SUBASE/daemonsu 2>$no
-            fi
-        elif [ $SDK == 22 ]; then
-            echo "Install for Android: 5.1 32bit"
-            cp bin/su_22_fix $SUBASE/daemonsu 2>$no
-            cp bin/su10_22_fix $SUBASE/daemonsu_10 2>$no
-        #    chmod 777 $SUBASE/daemonsu_10 2>$no
-        fi
-    #    chmod 777 /sbin/daemonsu 2>$no
-       
-        echo "Changing superuser app..."
-        if [ ! -d $BOOTDIR/system/app/superuser ]; then
-            mkdir $BOOTDIR/system/app/superuser 2>$no
-        fi
-        cp bin/superuser_fix.apk $BOOTDIR/system/app/superuser/superuser.apk 2>$no
-        mkdir /data/data/com.koushikdutta.sumasterz 2>$no
-        cp -ar /data/data/com.koushikdutta.superuser/* /data/data/com.koushikdutta.sumasterz 2>$no
-        echo "Please ignore 'su binary is outdated' notification."
-
-        
-
-
-    else
-        rm -rf fix
-
-    clear
-    pd gray "=============================================="
-    echo "  FLASHING..."
-    pd gray "=============================================="
-mkdir -p $BOOTDIR/system/app 2>$no
-
-        echo "Restoring original files..."
-        
-        chmod 777 /sbin/daemonsu 2>$no
-        if [ $SDK == 25 ]; then
-            if [ "$AARCH" == "arm64-v8a" ]; then
-                echo "Install for Android: 7.1 64bit"
-                cp bin/su_25_64 $SUBASE/daemonsu 2>$no
-            else
-                echo "Install for Android: 7.1 32bit"
-                cp bin/su_25 $SUBASE/daemonsu 2>$no
-            fi
-        elif [ $SDK == 22 ]; then
-            echo "Install for Android: 5.1 32bit"
-            cp bin/su_22 $SUBASE/daemonsu 2>$no
-            cp bin/su10_22 $SUBASE/daemonsu_10 2>$no
-         #   chmod 777 $SUBASE/daemonsu_10 2>$no
-        fi
-    #    chmod 777 /sbin/daemonsu
-        echo "Restoring superuser app..."
-        if [ ! -d $BOOTDIR/system/app/superuser ]; then
-            mkdir $BOOTDIR/system/app/superuser 2>$no
-        fi
-        cp bin/superuser.apk $BOOTDIR/system/app/superuser/superuser.apk 2>$no
-        mkdir /data/data/com.koushikdutta.superuser 2>$no
-        cp -ar /data/data/com.koushikdutta.sumasterz/* /data/data/com.koushikdutta.superuser 2>$no
-    fi
-        if [ -f "$SUBASE/daemonsu" ]; then
-            pd green "Done!"; logcat "enable root: done"
-            pd gray "=============================================="
-        touch $tp/.launch_daemonsu 2>$no
-        echo "Reboot after 3 seconds"
-         sleep 3; wboot
-        else
-            pd red "Installation failed"; logcat "enable root: failed (daemonsu not found)"
-        fi
 
 
 elif [ "$OPTR" == "4" ]; then
@@ -1418,70 +1464,20 @@ elif [ "$OPTR" == "4" ]; then
       pd red "FAILED! Cannot access su binary (Error $Error)"
     fi
     read
-elif [ "$OPTR" == "2" ]; then
-clear
-    pd gray "=============================================="
-    echo "  FLASHING..."
-    pd gray "=============================================="
-        mkdir bin 2>$no
-        unzip -o subinary -d bin &>$no
-    if [ "$(getprop ro.build.version.sdk)" -lt "25" ]; then
-    pd light_red "This feature do not work on Android version bellow 7.1"
-    elif [ ! "$(grep_prop enforce_suhide $tpm/root/module.prop)" == "true" ]; then
-        echo "Enable Enforcing SUHide mode..."
-        mod_prop enforce_suhide true $tpm/root/module.prop 2>$no
-        mv -f $SUBASE/daemonsu $workpath/daemonsu 2>$no
-        ( cd $workpath || exit
-           ln -fs daemonsu su
-           ln -fs daemonsu sx )
-        rm -rf $SUBASE/su 2>$no
-        rm -rf $SUBASE/sx 2>$no
-        
-        mkdir -p /system_root/system/priv-app/UniversalHide 2>$no
-        [ "$(getprop ro.product.cpu.abi)" = "arm64-v8a" ] && AR=arm64 || AR=arm
-        unzip -o bin/suhide.apk 'lib/*' -d /system_root/system/priv-app/UniversalHide &>$no
-        mv -f "/system_root/system/priv-app/UniversalHide/lib/$(getprop ro.product.cpu.abi)" "/system_root/system/priv-app/UniversalHide/lib/$AR" 2>$no
-        cp bin/suhide.apk $tpw/suhide.apk
-        ln -s $tpw/suhide.apk /system_root/system/priv-app/UniversalHide/UniversalHide.apk 2>$no
-        rm -rf $tpw/suhide.sh 2>$no
-       echo "#!/system/bin/sh\n#Custom command for apps in hidelist\n" >$tpw/suhide.sh
-        echo "Manage Hidelist through SUHide app!"
-        echo "Rebooting to enforce SUHide mode..."; logcat "enforce suhide mode"
-        sleep 3; setprop ctl.restart zygote
-    else
-        echo "Disable Enforcing SUHide mode..."
-        mod_prop enforce_suhide false $tpm/root/module.prop 2>$no
-        mv -f $SUBASE/daemonsu /sbin/daemonsu 2>$no
-        ( cd /sbin || exit
-           ln -fs daemonsu su
-           ln -fs daemonsu sx ) 2>$no
-        rm -rf $SUBASE/su 2>$no
-        rm -rf $SUBASE/sx 2>$no
-        rm -rf /data/local/librootcloak.so 2>$no
-        rm -rf /data/local/rootcloak-wrapper.sh 2>$no
-        rm -rf /system_root/system/app/UniversalHide 2>$no
-        rm -rf /system_root/system/priv-app/UniversalHide 2>$no
-        rm -rf $tpw/suhide.sh 2>$no
-        echo "Rebooting to apply native SU mode"; logcat "remove suhide mode"
-        sleep 3; setprop ctl.restart zygote
-    fi
-    run_su
- elif [ "$OPTR" == "5" ]; then
+
+ elif [ "$OPTR" == "4" ]; then
     run_su
     pd green "Launch new daemon process!"
- elif [ "$OPTR" == "6" ]; then
- if [ ! "$(grep_prop enforce_suhide $tpm/root/module.prop)" == "true" ]; then
-  pd red "Enforce SUHide first!"
- elif
-[ "$(getprop persist.geektool.advsuhide)" == "1" ]; then
+ elif [ "$OPTR" == "5" ]; then
+ 
+
+if [ "$(getprop persist.geektool.advsuhide)" == "1" ]; then
  setprop persist.geektool.advsuhide 0
  mod_prop persist.geektool.advsuhide 0
  pd green "Enhanced mode has been disabled"
 else
  print_title " ENHANCED MODE FOR SUHIDE"
  echo "It is not recommended to enable this features"
- echo "Enforce SU Hide is enough for you"
- echo "You should try hiding the Superuser app first"
  echo "Do you want to enable this? <yes/no>"
  p none "[CHOICE]: "
  read opt
@@ -1491,7 +1487,7 @@ else
  pd green "Enhanced mode has been enabled"
  fi
 fi
- elif [ "$OPTR" == "3" ]; then
+ elif [ "$OPTR" == "2" ]; then
 
     clear
     pd gray "=============================================="
@@ -1502,173 +1498,21 @@ fi
 p none "[CHOICE]: "
  read UNR
  if [ "$UNR" == "yes" ]; then
-  chmod 777 $SUBASE/daemonsu 2>$no
-  echo "Removing superuser..."
-  FILES="
-$SUBASE/daemonsu
-$SUBASE/su
-$SUBASE/sx
-/sbin/daemonsu
-/sbin/su
-/sbin/sx
-/sbin/sx
-/sbin/ku.sud
-/sbin/ksud
-/system/xbin/daemonsu
-/system/xbin/su
-/system/xbin/sx
-/system/xbin/sx
-/system/xbin/ku.sud
-/system/xbin/ksud
-/system/bin/daemonsu
-/system/bin/su
-/system/bin/sx
-/system/bin/ku.sud
-/system/bin/ksud
-/vendor/bin/daemonsu
-/vendor/bin/su
-/vendor/bin/sx
-/vendor/bin/ku.sud
-/vendor/bin/ksud
-/system_root/system/priv-app/UniversalHide
-/system_root/system/app/UniversalHide
-$tpw/suhide.sh
-/system/app/superuser.apk"
-mod_prop enforce_suhide false $tpm/root/module.prop 2>$no
-  for file in $FILES; do
-          rm -rf $file 2>$no &
-  done
-        rm -rf /data/local/librootcloak.so 2>$no
-        rm -rf /data/local/rootcloak-wrapper.sh 2>$no
-        rm -rf /system_root/system/priv-app/UniversalHide 2>$no
-  rm disable 2>$no
-  rm fix 2>$no
-pm path com.koushikdutta.superuser | while read obt; do
-apppath="${obt: 8}"; basedir="${apppath%/*}"
-rm -rf "$basedir" 2>$no
-break
-done
-
-pm path com.koushikdutta.sumasterz | while read obt; do
-apppath="${obt: 8}"; basedir="${apppath%/*}"
-rm -rf "$basedir" 2>$no
-break
-done
-  if [ -f /system/app/superuser/superuser.apk ]; then
-      rm -rf /system_root/system/app/superuser 2>$no
-  fi
-SUBIN=""
-ENVPATH="/system/bin /system/xbin /system/sbin /vendor/bin /sbin"
-for e in $ENVPATH; do
-[ -f "$e/daemonsu" ] && SUBIN="$e/daemonsu"
-done
-if [ ! "$SUBIN" ]; then
-  logcat "disable root"
-  pd green "Done!"
-pd gray "=============================================="
-  echo "Reboot after 3 seconds"
-         sleep 3; wboot
-else
-  pd red "Failed!"
-pd gray "=============================================="
-  pd red "Cannot unroot. Read-only system!"
-fi
-
+  install_subinary uninstall 
 
  fi
 else
  pd red "Cancelled"
 
 fi
-p none
 else
     echo "Enable ROOT access? <yes/no>"
     
     p none "[CHOICE]: "
     read ROOT
     if [ "$ROOT" == "yes" ]; then
-        if [ ! -f "subinary" ]; then
-            echo "Downloading plugin..."
-            rm -rf subinary.x
-git_su="https://github.com/HuskyDG/VMOSPro_RootXposed_Terminal/releases/download/v0.stub/subinary"
-            $bb wget -O subinary.x $git_su &>$no && mv subinary.x subinary
-        fi
-        clear
-        pd gray "=============================================="
-        echo "  FLASHING..."
-        pd gray "=============================================="
-        echo "Decompress su binary..."
-        mkdir bin 2>$no
-        unzip -o subinary -d bin &>$no
-    
-  
-    
-mkdir -p $BOOTDIR/system/app 2>$no
-mkdir -p $BOOTDIR/system/xbin 2>$no
-
-echo "Installing su binary..."
-if [ $SDK == 25 ]; then
-  if [ "$AARCH" == "arm64-v8a" ]; then
-    echo "Install for Android: 7.1 64bit"
-    cp bin/su_25_64 /sbin/daemonsu 2>$no
-    else
-    echo "Install for Android: 7.1 32bit"
-    cp bin/su_25 /sbin/daemonsu 2>$no
-  fi
-elif [ $SDK == 22 ]; then
-  echo "Install for Android: 5.1 32bit"
-  cp bin/su_22 /sbin/daemonsu 2>$no
-  cp bin/su10_22 /sbin/daemonsu_10 2>$no
-  chmod 777 /sbin/daemonsu_10 2>$no
-elif [ $SDK == 19 ]; then
-  echo "Install for Android: 4.4 32bit"
-  cp bin/su_19 /sbin/daemonsu 2>$no
-  cp bin/su_19 $BOOTDIR/sbin/ku.sud 2>$no
-  cp bin/su_19 $BOOTDIR/sbin/ksud 2>$no
-else
-  pd red "Installation failed" && logcat "enable root: failed version not supported"
-  
-fi
-if [ ! -f /sbin/daemonsu ]; then
-pd red "Installation failed" && logcat "enable root: failed daemonsu not found"
-else
-FILES="/sbin/su /sbin/sx"
-for file in $FILES; do
-    if [ ! -f "$file" ]; then
-        ln -s /sbin/daemonsu $BOOTDIR$file 2>$no
-    fi
-done
-echo "Setting permissions..."
-FILES="
-/sbin/daemonsu
-/sbin/ksud
-/sbin/ku.sud
-"
-for file in $FILES; do
-    if [ -f "$BOOTDIR$file" ]; then
-        chmod 777 $BOOTDIR$file 2>$no
-    fi
-done
-[ -f "disable" ] && ln -s /sbin/daemonsu /sbin/su 2>$no
-echo "Installing superuser app..."
-if [ ! $SDK == 19 ]; then
-    if [ ! -d $BOOTDIR/system/app/superuser ]; then
-        mkdir $BOOTDIR/system/app/superuser 2>$no
-    fi
-    cp bin/superuser.apk $BOOTDIR/system/app/superuser/superuser.apk 2>$no
-else
-    cp bin/kinguser.apk $BOOTDIR/system/app/superuser.apk 2>$no
-fi
-touch $tp/.launch_daemonsu 2>$no
-pd green "Done!"
-logcat "enable root: done"
-mod_prop type superuser $tpm/root/module.prop 2>$no
-pd gray "=============================================="
-echo "Reboot after 3 seconds"
-         sleep 3; wboot
-
-    fi
-
+       
+        install_subinary
 fi
 fi
 
@@ -1920,7 +1764,7 @@ $tp/binary/daemonsu --daemon &
 logcat "launch service: daemonsu process"
 
 logcat "reset suhide_list if enabled"
-FILES="/data/local/librootcloak.so /data/local/rootcloak-wrapper.sh /data/data/com.devadvance.rootcloak2/shared_prefs/com.devadvance.rootcloak2_preferences.xml"
+FILES="/data/local/librootcloak.so /data/local/rootcloak-wrapper.sh /data/data/com.github.huskydg.suhide/shared_prefs/com.github.huskydg.suhide_preferences.xml"
 for n in $FILES; do
 rm -rf $n
 done
@@ -1993,6 +1837,7 @@ sleep 0.5;
 if [ -f "$tpw/.remove_package" ]; then
 cat $tpw/.remove_package | while read pkg; do
 pm uninstall -k --user 0 $pkg &
+logcat "remove_package: $pkg"
 done
 fi
 rm -rf $tpw/.remove_package
@@ -2012,6 +1857,7 @@ done
 ( rm_asec ) &
 
 install_mod_environment(){
+logcat "start geektool toolflash daemon process"
 while true; do
 find /system_root/dev/vm-geektool/*/zip -prune | while read obj; do
 ZIP_FILE="$(cat $obj)"
@@ -2027,27 +1873,35 @@ done
 done
 }
 
-shizuku_start_environment(){
+daemon_eviroment(){
+TRIGGER="$1"; COMMAND="$2"
 while true; do
-find /system_root/dev/vm-geektool/*/shizuku -prune | while read obj; do
+find /system_root/dev/vm-geektool/*/$TRIGGER -prune | while read obj; do
+VALUE_TRIGGER="$(cat "$obj")"
 rm -rf "$obj"
 ( DIRNAME=${obj%/*}; BASENAME=$(basename "$DIRNAME");
-shizuku_start >/proc/$BASENAME/fd/0
+"$COMMAND" "$VALUE_TRIGGER" >/proc/$BASENAME/fd/0
 err_code=$?
 rm -rf $DIRNAME/.done
 echo "$err_code" > "$DIRNAME/.done"
 sleep 1
 rm -rf "$DIRNAME" 
-logcat "start shizuku: exit with code $err_code" ) &
+logcat "start $TRIGGER: exit with code $err_code" ) &
 done
 done
+}
+
+start_environment(){
+logcat "start geektool script daemon process"
+( daemon_eviroment shizuku shizuku_start ) &
+( daemon_eviroment root daemonsu_start ) &
 }
 
 
 rm -rf "/system_root/dev/vm-geektool"
 mkdir -p "/system_root/dev/vm-geektool"
 ( install_mod_environment ) &
-( shizuku_start_environment ) &
+( start_environment ) &
 
 
 

@@ -1,5 +1,5 @@
 #!/system/bin/sh
-DIRNAME=${0%/*}; VALUE=$@; NAME=`basename $0`; chmod 777 $DIRNAME
+DIRNAME=${0%/*}; VALUE_INIT="$@"; NAME=`basename $0`; chmod 777 $DIRNAME
 grep_prop() {
   local REGEX="s/^$1=//p"
   shift

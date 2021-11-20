@@ -4,6 +4,7 @@ echo "PATH: $DIRNAME"
 
 echo "- Start build..."
 make_folder(){
+rm -rf tool_files
 mkdir -p system/media
 cp bootanimation.zip system/media/bootanimation.zip
 mkdir -p tool_files/main/exbin

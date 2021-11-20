@@ -37,10 +37,7 @@ install_mod(){
 current_pid="$$"
 name=$2;
 [ ! "$name" ] && name=`random 10`;
-rm -rf /system_root/dev/tmpdir 2>/dev/null
-  mkdir -p /system_root/dev/tmpdir 2>/dev/null
-  ln -s "$ZIPFILE" "/system_root/dev/tmpdir/$name.zip" 2>/dev/null
-  ZIPFILE="/system_root/dev/tmpdir/$name.zip"
+ZIPFILE="$(readlink -f "$ZIPFILE")"
 rm -rf "/system_root/dev/vm-geektool/$current_pid/"
 mkdir -p "/system_root/dev/vm-geektool/$current_pid/"
 echo "$ZIPFILE" >>/system_root/dev/vm-geektool/$current_pid/zip
@@ -57,14 +54,19 @@ export PATH=/tool_files/main/exbin
 }
 
 
-mod_prop(){
-NAME=$1; VARPROP=$2; FILE="$3"; [ ! "$FILE" ] && FILE=/tool_files/system.prop
-if [ "$NAME" ] && [ ! "$NAME" == "=" ]; then
-touch $FILE 2>/dev/null
-echo "$NAME=$VARPROP" | while read prop; do export newprop=$(echo ${prop} | cut -d '=' -f1); sed -i "/${newprop}/d" $FILE; cat="`cat $FILE`"; echo $prop > $FILE; echo -n "$cat" >>$FILE; done 2>/dev/null
-else
-echo "Change or add property in a file\nusage: del_prop NAME VALUE FILE"
-fi
+install_mod(){
+( ZIPFILE="$1"
+current_pid="$$"
+name=$2;
+[ ! "$name" ] && name=`random 10`;
+ZIPPATH="$(realpath "$ZIPFILE")"
+  ZIPFILE="$ZIPPATH"
+rm -rf "/system_root/dev/vm-geektool/$current_pid/"
+mkdir -p "/system_root/dev/vm-geektool/$current_pid/"
+echo "$ZIPFILE" >>/system_root/dev/vm-geektool/$current_pid/zip
+until isf "/system_root/dev/vm-geektool/$current_pid/.done"; do
+sleep 0.5
+done )
 }
 
 
@@ -258,6 +260,6 @@ ABILONG=`grep_prop ro.product.cpu.abi`
 get_abi
 }
 
-TOOLVERCODE=20300
-TOOLVER=2.3
+TOOLVERCODE=20400
+TOOLVER=2.4
 
