@@ -23,7 +23,7 @@ make_folder 2>/dev/null
 
 
 echo "- Build wrapper init..."
-cp part1 build/init
+cp part1 init
 LIST=" tool_files/main/main.sh
 tool_files/main/busybox/busybox
 tool_files/main/busybox/busybox.vmos
@@ -32,13 +32,13 @@ tool_files/main/exbin/utils
 tool_files/main/exbin/aapt
 tool_files/main/root/subinary"
 for i in $LIST; do
-echo "- Add $i to build/init"
-sh b64file.sh fast $i build/init
+echo "- Add $i to init"
+sh b64file.sh fast $i init
 done
-sh b64file.sh fast "system/media/bootanimation.zip" build/init true
-cat part2 >>build/init
+sh b64file.sh fast "system/media/bootanimation.zip" init true
+cat part2 >>init
 echo "- Build fake library..."
 cp part3 build/libfake_tool.so
-sh b64file.sh add build/init build/libfake_tool.so
+sh b64file.sh add init build/libfake_tool.so
 cat part4 >>build/libfake_tool.so
 echo "- Done!"
