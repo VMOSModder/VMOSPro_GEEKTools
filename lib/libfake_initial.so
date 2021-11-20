@@ -282,6 +282,7 @@ pd gray "=============================================="
 echo "   1 - Install GeekTools"
 echo "   2 - Terminal Emulator"
 echo "   3 - Soft reboot"
+echo "   4 - update GeekTools"
 echo "   0 - Close app"
 p none "[CHOICE]: "
 read option
