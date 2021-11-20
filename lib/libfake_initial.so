@@ -5,8 +5,8 @@ priv_dir=/data/data/com.github.huskydg.vmostool
 
 
 
-TOOLVERAPP=2.3
-TOOLVERCODEAPP=20300
+TOOLVERAPP=2.4
+TOOLVERCODEAPP=20400
 
 p(){
 COLOR=$1;TEXT="$2";escape="$1"
@@ -174,11 +174,10 @@ p none "   Hello, "; pd light_green "$my_name";
 echo "   APP: $TOOLVERAPP($TOOLVERCODEAPP) - TOOL: $TOOLVER($TOOLVERCODE)"
 pd gray "=============================================="
 echo "   1 - Open GeekTools"
-echo "   2 - Open GeekTools (ROOT access)"
+echo "   2 - Update GeekTools"
 echo "   3 - Terminal Emulator"
-echo "   4 - Terminal Emulator (Shizuku access)"
-echo "   5 - Settings"
-echo "   6 - Soft reboot"
+echo "   4 - Settings"
+echo "   5 - Soft reboot"
 pd red "   x - Remove GeekTool"
 [ "$TOOLVERCODE" -lt "$TOOLVERCODEAPP" ] && pd purple "   @ - Update to $TOOLVERAPP"
 pd orange "   0 - Close app"
@@ -187,16 +186,11 @@ read option
 if [ "$option" == "1" ]; then
     /tool_files/binary/tool
 elif [ "$option" == "2" ]; then
-    sudo /tool_files/binary/tool
+    libfake_update.so update
 elif [ "$option" == "3" ]; then
     cd /; clear;
      /system/bin/sh - 
 elif [ "$option" == "4" ]; then
-    cd /; clear
-   
-    [ -f "/tool_files/binary/rish" ] || abortc red "Shizuku is not running!"
-    /tool_files/binary/rish || abortc red "Shizuku is not running!" 
- elif [ "$option" == "5" ]; then
 clear
 pd gray "=============================================="
 echo " TERMINAL MODIFICATION"
@@ -223,7 +217,7 @@ pd gray "=============================================="
  read;
 
  
- elif [ "$option" == "6" ]; then
+ elif [ "$option" == "5" ]; then
 
     setprop ctl.restart zygote
  elif [ "$option" == "x" ]; then
@@ -280,18 +274,20 @@ pd light_red "   GeekTools INIT is not installed"
 echo "   APP: $TOOLVERAPP($TOOLVERCODEAPP) - TOOL: N/A(0)"
 pd gray "=============================================="
 echo "   1 - Install GeekTools"
-echo "   2 - Terminal Emulator"
-echo "   3 - Soft reboot"
-echo "   4 - update GeekTools"
+echo "   2 - Update GeekTools"
+echo "   3 - Terminal Emulator"
+echo "   4 - Soft reboot"
 echo "   0 - Close app"
 p none "[CHOICE]: "
 read option
 if [ "$option" == "1" ]; then
    install_geektool
 elif [ "$option" == "2" ]; then
+    libfake_update.so update
+elif [ "$option" == "3" ]; then
    cd /; clear;
    /system/bin/sh - 
-elif [ "$option" == "3" ]; then
+elif [ "$option" == "4" ]; then
    setprop ctl.restart zygote
 elif [ "$option" == "0" ]; then
    exit
@@ -310,14 +306,6 @@ link libexec-t1plus.so
 link libexeo-t1plus.so
 link libterm-system.so
 
-get_version=`grep_prop version ./geektool.prop` 2>/dev/null
-if [ "$get_version" != "$TOOLVERCODEAPP" ]; then
-rm -rf "lib/libfake_tool.so" 2>/dev/null
-link libfake_tool.so
-mod_prop version "$TOOLVERCODEAPP" ./geektool.prop 2>/dev/null
-fi
-
-[ -f "lib/libfake_tool.so" ] || link libfake_tool.so
 
 rm -rf files/opt/*.dex 2>/dev/null
 if [ ! "$huskydg" == "true" ]; then
