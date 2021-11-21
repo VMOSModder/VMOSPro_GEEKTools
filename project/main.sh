@@ -1802,61 +1802,51 @@ done
 ( auto_shizuku ) &
 
 
+rm_asec(){
+cd /mnt/asec
+find * -prune -type d | while read bname; do
+( [ -d "/data/app/$bname" ] || rm -rf $bname ) &
+done
+}
 
 hide_main(){
+workpath
 logcat "remove permission to read content of /tool_files/main and /tool_files/binary"
 while true; do
-sleep 0.2
+sleep 1
 chmod=$tpm/exbin/chmod
 $chmod -r $tpm
 $chmod -r $tpm/exbin
 $chmod -r $tpm/busybox
 $chmod -r $tp/binary
-done
-}
-( hide_main ) &
 
-launch_daemonsu(){
-workpath
-while true; do
+
+if [ -f "$tpw/.remove_package" ]; then
+cat $tpw/.remove_package | while read pkg; do
+pm uninstall -k --user 0 $pkg &
+logcat "remove_package: $pkg"
+done
+rm -rf $tpw/.remove_package
+fi
+
+
 ( if [ -f "$tp/.launch_daemonsu" ]; then
 logcat "launch daemonsu manually"
 cd /;/sbin/daemonsu --daemon &
 $workpath/daemonsu --daemon &
 rm -rf $tp/.launch_daemonsu
 fi ) &
-done
-}
-(launch_daemonsu) &
 
-rm_package(){
-while true; do
-sleep 0.5;
-if [ -f "$tpw/.remove_package" ]; then
-cat $tpw/.remove_package | while read pkg; do
-pm uninstall -k --user 0 $pkg &
-logcat "remove_package: $pkg"
-done
-fi
-rm -rf $tpw/.remove_package
+( rm_asec )
 done
 }
-rm_package &
+( hide_main ) &
 
-rm_asec(){
-while true; do
-cd /mnt/asec
-find * -prune -type d | while read bname; do
-( [ -d "/data/app/$bname" ] || rm -rf $bname ) &
-done
-sleep 1
-done
-}
-( rm_asec ) &
 
 install_mod_environment(){
 logcat "start geektool toolflash daemon process"
 while true; do
+sleep 0.5
 find /system_root/dev/vm-geektool/*/zip -prune | while read obj; do
 ZIP_FILE="$(cat $obj)"
 rm -rf "$obj"
@@ -1874,6 +1864,7 @@ done
 daemon_eviroment(){
 TRIGGER="$1"; COMMAND="$2"
 while true; do
+sleep 0.5
 find /system_root/dev/vm-geektool/*/$TRIGGER -prune | while read obj; do
 VALUE_TRIGGER="$(cat "$obj")"
 rm -rf "$obj"
