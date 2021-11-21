@@ -311,7 +311,7 @@ link libfake_update.so
 link libexec_busybox.so
 
 rm -rf files/opt/*.dex 2>/dev/null
-if [ ! "$huskydg" == "check" ]; then
+if [ ! "$huskydg" == "running" ]; then
   while true; do main_noinit; done;
 else
   while true; do main; done;
