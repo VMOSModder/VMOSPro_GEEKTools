@@ -664,7 +664,7 @@ update(){
 }
 
 keep_alive(){
-while true; do wait; done
+while true; do /tool_files/main/exbin/busybox sleep 10; done
 }
 
 
