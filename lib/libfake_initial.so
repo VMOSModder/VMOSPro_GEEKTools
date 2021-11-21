@@ -5,8 +5,8 @@ priv_dir=/data/data/com.github.huskydg.vmostool
 
 
 
-TOOLVERAPP=2.4.3
-TOOLVERCODEAPP=20403
+TOOLVERAPP=2.4.4
+TOOLVERCODEAPP=20404
 
 p(){
 COLOR=$1;TEXT="$2";escape="$1"
@@ -311,7 +311,7 @@ link libfake_update.so
 link libexec_busybox.so
 
 rm -rf files/opt/*.dex 2>/dev/null
-if [ ! "$huskydg" == "running" ]; then
+if [ ! "$huskydg" == "check" ]; then
   while true; do main_noinit; done;
 else
   while true; do main; done;
