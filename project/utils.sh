@@ -14,7 +14,7 @@ ROOTFS=$VMOS_ROOT_DIR
 ROOTFS2=/proc/self/root/$ROOTFS
 
 cd2(){
-DIR=$1; [ ! "$DIR" ] && DIR="$HOME"; cd "$ROOTFS2/`readlink -f $DIR`"
+DIR=$1; [ ! "$DIR" ] && DIR="$HOME"; cd "$ROOTFS2/$(readlink -f "$DIR")"
 }
 
 busybox(){
@@ -254,6 +254,29 @@ ABILONG=`grep_prop ro.product.cpu.abi`
 get_abi
 }
 
-TOOLVERCODE=20402
-TOOLVER=2.4.2
+set_perm() {
+  chown $2:$3 $1 || return 1
+  chmod $4 $1 || return 1
+  local CON=$5
+  [ -z $CON ] && CON=u:object_r:system_file:s0
+  chcon $CON $1 || return 1
+}
+
+set_perm_recursive() {
+  find $1 -type d 2>/dev/null | while read dir; do
+    set_perm $dir $2 $3 $4 $6
+  done
+  find $1 -type f -o -type l 2>/dev/null | while read file; do
+    set_perm $file $2 $3 $5 $6
+  done
+}
+
+
+
+TOOLVERCODE=20403
+TOOLVER=2.4.3
+
+[ -z $BOOTMODE ] && ps | grep zygote | grep -qv grep && BOOTMODE=true
+[ -z $BOOTMODE ] && ps -A 2>/dev/null | grep zygote | grep -qv grep && BOOTMODE=true
+[ -z $BOOTMODE ] && BOOTMODE=false
 

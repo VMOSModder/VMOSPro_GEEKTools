@@ -398,14 +398,8 @@ ENVPATH="/sbin $workpath /system/bin /system/sbin /system/xbin /vendor/bin"
 for e in $ENVPATH; do
 rm -rf $e/tool 2>$no
 done
-echo "IyEvc3lzdGVtL2Jpbi9zaApWQVIxPSQxOwphYm9ydCgpewplY2hvICIkMSI7IGV4aXQgMTsKfQoK
-aWYgWyAiJFZBUjEiID09ICJ3b3JrcGF0aCIgXTsgdGhlbgpjYXQgIi90b29sX2ZpbGVzL2JpbmFy
-eS8ud29ya3BhdGgiIDI+L2Rldi9udWxsIHx8IGFib3J0ICJDYW5ub3QgcmVhZCBnZWVrdG9vbHMg
-d29ya2luZyBwYXRoIgplbGlmIFsgIiRWQVIxIiA9PSAiZXhwYXRoIiBdOyB0aGVuCmVjaG8gIi90
-b29sX2ZpbGVzL21haW4vZXhiaW4iIDI+L2Rldi9udWxsCmVsc2UKc2ggL3Rvb2xfZmlsZXMvbWFp
-bi9tYWluLnNoCmZp
-" | base64 -d >$tp/binary/tool
-chmod 777 $tp/binary/tool 2>$no
+ln -s geektool $workpath/tool
+chmod 777 $workpath/tool
 }
 
 exbin_install(){
@@ -657,7 +651,8 @@ if [ -f $STARTER_PATH ]; then
         echo "info: shizuku_starter exit with non-zero value $result"
     else
         echo "info: shizuku_starter exit with 0"
-        setprop persist.huskydg.shizuku 1
+        setprop persist.geektool.shizuku 1
+        mod_prop persist.geektool.shizuku 1 2>$no
     fi
 else
     echo "Starter file not exist, please open Shizuku and try again."
@@ -667,6 +662,12 @@ fi
 update(){
 # nothing
 }
+
+keep_alive(){
+while true; do wait; done
+}
+
+
 
 
 test_rw(){
@@ -750,8 +751,8 @@ echo "  10 - Google Services"
 pd gray "       Install or uninstall Google Play Services"
 echo "  11 - Backup Data"
 pd gray "       Backup neccessary data and import to any VM"
-echo "  12 - Start Shizuku server"
-pd gray "       A way to login to root shell without SU"
+echo -n "  12 - Shizuku service  "; [ "$(getprop persist.geektool.shizuku)" == "1" ] && pd light_green "[ON]" || pd light_red "[OFF]";
+pd gray "       Grant special access by using Shizuku API"
 pd light_green "TOOL MENU"
 [ ! "$(id -u)" == "0" ] && pd none "  # - Root mode "
 p none " "
@@ -1360,12 +1361,14 @@ elif [ "$ans" == "$" ]; then
     done
     pd green "Temporary files was removed!"
 elif [ "$ans" == "12" ]; then
-( cd $tpm/root && exit 1
-unzip -o subinary -d bin &>$no
-cp $MDIR/root/bin/rish $tp/binary/rish
-chmod 777 $tp/binary/rish )
+if [ "$(getprop persist.geektool.shizuku)" == "1" ]; then
+setprop persist.geektool.shizuku 0
+mod_prop persist.geektool.shizuku 0
+pd green "Disabled Shizuku service"
+else
 print_title "START SHIZUKU"
 launch_shizuku_process 2>$no
+fi
 else
     pd light_red "Invalid option!"
 
@@ -1419,7 +1422,7 @@ print_screen_r(){
    pd gray "=============================================="
    if [ "$($SUBIN -v)" == "16 com.koushikdutta.superuser" ]; then
        echo "  1 - Replace SU Binary"
-       pd gray "      The current package ia no longer supported"
+       pd gray "      The current package is no longer supported"
    else
        echo "  1 - Reinstall SU Binary"
        pd gray "      Restore Superuser package"
@@ -1431,7 +1434,7 @@ print_screen_r(){
        pd gray "      Check if SU is running correctly"
    echo "  4 - Launch daemon SU manually"
        pd gray "      Try to run new process if SU is not running"
-   p none "  5 - Enhanced mode for SUHide "; [ "$(getprop persist.geektool.advsuhide)" == "1" ] && pd light_green "Enabled" || pd light_red "Disabled";
+   p none "  5 - Enhanced mode for SUHide "; [ "$(getprop persist.geektool.advsuhide)" == "1" ] && pd light_green "[ON]" || pd light_red "[OFF]";
        pd gray "      Enable if apps still detect root"
 
 p none "[CHOICE]: "
@@ -1533,6 +1536,7 @@ elif [ "$VAR1" == "post-fs-data" ]; then
 logcat post-fs-data triggered &
 ([ "$(id -u)" == "0" ] && logcat login as root user || ( logcat "wrong user: `whoami` not root user" ) )&
 logcat "check id user: `id`" &
+[ "$(id -u)" == "0" ] || exit 1
 (install_utils && logcat load utils) &
 (make_systemroot) &
 execute_script(){
@@ -1587,7 +1591,6 @@ fi
 
 init_script_data(){
 
-setprop huskydg.tool.init $init_level
 setprop huskydg.tool.dualspace false
 if [ -d "/storage/emulated/0" ]; then
 SDCARD="/storage/emulated/0"
@@ -1701,8 +1704,10 @@ chmod 777 $BBDIR/busybox 2>$no
 
 (init_script_data &) &>$no
 (init_script_core &) &>$no
-elif [ "$VAR1" == "late_start" ]; then
 
+keep_alive
+elif [ "$VAR1" == "late_start" ]; then
+[ "$(id -u)" == "0" ] || exit 1
 BBDIR=$tpm/busybox
 EXDIR=$tpm/exbin
 SDK=$(getprop ro.build.version.sdk)
@@ -1779,23 +1784,16 @@ wait_load
 sh $MAIN update 9998 &
 while true; do
 if [ "$(pm list packages)" ]; then
-rm -rf $tp/shizuku.txt
-if [ "$(pm path moe.shizuku.privileged.api)" ]; then
-logcat "launch service: shizuku"
-shizuku_start >>$tp/shizuku.txt
-fi
 logcat load apps completed
 sh /init.tool
 break
-
-
 fi
 done
 
 auto_shizuku(){
 while true; do
-  if [ ! "$(pidof shizuku_server)" ] && [ "$(cat /data/system/packages.list | grep 'moe.shizuku.privileged.api ')" ] && [ -f "$tpm/root/bin/rish" ]; then
-       touch $tp/.launch_shizuku
+  if [ ! "$(pidof shizuku_server)" ] && [ "$(cat /data/system/packages.list | grep 'moe.shizuku.privileged.api ')" ] && [ -f "$tpm/root/bin/rish" ] && [ "$(getprop persist.geektool.shizuku)" == "1" ]; then
+       ( shizuku_start )
        sleep 10
        fi
  sleep 1
@@ -1939,14 +1937,24 @@ done
 
 }
 ( microsd_service ) &
-
+keep_alive
 elif [ "$VAR1" == "early-init" ]; then
 early(){
 echo nothing
 }
+keep_alive
 elif [ "$VAR1" == "init" ]; then
 setprop ro.huskydg.initmode false
+[ "$(id -u)" == "0" ] || exit 1
+until [ -f "/system_root/dev/.geektool_done" ]; do wait; done;
+cd $tpm/root || exit 1
+mkdir bin
+unzip -o subinary rish shizuku_starter rish_shizuku.dex -d bin &>$no
+chmod -R 777 bin
+cp $tpm/root/bin/rish $tp/binary/rish
+chmod 777 $tp/binary/rish
 
+keep_alive
 else
 cd $MDIR || exit
 clear;

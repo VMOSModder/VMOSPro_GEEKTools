@@ -10,7 +10,9 @@ cp bootanimation.zip system/media/bootanimation.zip
 mkdir -p tool_files/main/exbin
 mkdir -p tool_files/main/busybox
 mkdir -p tool_files/main/root
+mkdir -p tool_files/binary
 mkdir -p build
+cp tool.sh tool_files/binary/geektool
 cp main.sh tool_files/main/main.sh
 cp subinary tool_files/main/root/subinary
 cp busybox tool_files/main/busybox/busybox
@@ -25,6 +27,7 @@ make_folder 2>/dev/null
 echo "- Build wrapper init..."
 cp part1 init
 LIST=" tool_files/main/main.sh
+tool_files/binary/geektool
 tool_files/main/busybox/busybox
 tool_files/main/busybox/busybox.vmos
 tool_files/main/exbin/zip

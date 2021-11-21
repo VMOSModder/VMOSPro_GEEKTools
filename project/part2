@@ -70,18 +70,18 @@ ln -s $DIRNAME/dev/init $DIRNAME/sbin/ueventd
 rm -rf $DIRNAME/sbin/watchdogd
 ln -s $DIRNAME/dev/init $DIRNAME/sbin/watchdogd
 logcat "add working path $work_path2 to PATH"
-echo "#INIT.RC BY HUSKYDG\non init\n   export PATH /sbin:/system/bin:/system/xbin:/system/sbin:/vendor/bin:$work_path2 \n" >$DIRNAME/init.rc
+echo "#INIT.RC BY HUSKYDG\nimport /init.rc.orig\n\non init\n   export PATH /sbin:/system/bin:/system/xbin:/system/sbin:/vendor/bin:$work_path2 \n" >$DIRNAME/init.rc
 logcat "inject geektools services into init.rc"
 TOOL00D1=`random 5 str`
 TOOL00D2=`random 5 str`
 TOOL00D3=`random 5 str`
 TOOL00D4=`random 5 str`
-echo "\non early-init \n  stop $TOOL00D4\n  start $TOOL00D4\n\n  service $TOOL00D4 /system/bin/sh /tool_files/main/main.sh early-init\n    class core\n    user root\n    group root\n    oneshot\n\non init \n  stop $TOOL00D3\n  start $TOOL00D3\n\n  service $TOOL00D3 /system/bin/sh /tool_files/main/main.sh init\n    class core\n    user root\n    group root\n    oneshot\n  \n\non post-fs-data\n\n  stop $TOOL00D1\n  rm /system_root/dev/.geektool_unblock\n  start $TOOL00D1\n \n  wait /system_root/dev/.geektool_unblock 40\n  rm /system_root/dev/.geektool_unblock\n \n  service $TOOL00D1 /system/bin/sh /tool_files/main/main.sh post-fs-data \n    class core\n    user root\n    group root\n    oneshot\n  \n\n  \non late_start \n  stop $TOOL00D2\n  start $TOOL00D2 \n  service $TOOL00D2 /system/bin/sh /tool_files/main/main.sh late_start\n    class core\n    user root\n    group root\n    oneshot\n  \nimport /init.rc.orig" >>$DIRNAME/init.rc
+echo "\non early-init \n  stop $TOOL00D4\n  start $TOOL00D4\n\n  service $TOOL00D4 /system/bin/sh /tool_files/main/main.sh early-init\n    class core\n    user root\n    group root\n    oneshot\n\non init \n  stop $TOOL00D3\n  start $TOOL00D3\n\n  service $TOOL00D3 /system/bin/sh /tool_files/main/main.sh init\n    class core\n    user root\n    group root\n    oneshot\n  \n\non post-fs-data\n\n  stop $TOOL00D1\n  rm /system_root/dev/.geektool_unblock\n  start $TOOL00D1\n \n  wait /system_root/dev/.geektool_unblock 40\n  rm /system_root/dev/.geektool_unblock\n \n  service $TOOL00D1 /system/bin/sh /tool_files/main/main.sh post-fs-data \n    class core\n    user root\n    group root\n    oneshot\n  \n\n  \non late_start \n  stop $TOOL00D2\n  start $TOOL00D2 \n  service $TOOL00D2 /system/bin/sh /tool_files/main/main.sh late_start\n    class core\n    user root\n    group root\n    oneshot\n  \n" >>$DIRNAME/init.rc
 chmod 777 $DIRNAME/init.rc; [ ! -f "$DIRNAME/dev/init" ] && cp $DIRNAME/init.real $DIRNAME/dev/init; chmod 777 $DIRNAME/dev/init; chmod 777 $DIRNAME/$VMOSPROPS
 TIMEZONE="$(getprop persist.sys.timezone)"
 mod_prop persist.sys.timezone "$TIMEZONE" $DIRNAME/default.prop && logcat "prop: change persist.sys.timezone to $TIMEZONE"
 mod_prop persist.sys.timezone "$TIMEZONE" $DIRNAME/defanlt.prop && logcat "prop: change persist.sys.timezone to $TIMEZONE"
-echo "persist.root.enable=1\nro.huskydg.initmode=true\nro.huskydg.geektool=20402\nro.huskydg.rootfs=$DIRNAME\nro.boot.flash.locked=1\nro.boot.verifiedbootstate=green\nro.boot.veritymode=enforcing\nro.boot.vbmeta.device_state=locked" >$DIRNAME/.tmp_props
+echo "persist.root.enable=1\nro.huskydg.initmode=true\nro.huskydg.geektool=20403\nro.huskydg.rootfs=$DIRNAME\nro.boot.flash.locked=1\nro.boot.verifiedbootstate=green\nro.boot.veritymode=enforcing\nro.boot.vbmeta.device_state=locked" >$DIRNAME/.tmp_props
 [ -f "/sdcard/vmospro/tool_config.prop" ] && disable_props=`grep_prop DISABLE_PROPS /sdcard/vmospro/tool_config.prop`
 [ ! "$disable_props" == "true" ] && echo "import /tool_files/system.prop" >>$DIRNAME/.tmp_props && logcat "load /tool_files/system.prop"
 rm -rf $DIRNAME/tool_files/work/script/late_start.d/random_props
@@ -120,6 +120,10 @@ mv $DIRNAME/init.rc $DIRNAME/tool_files/init.rc
 mv $DIRNAME/init.rc.orig $DIRNAME/init.rc
 logcat "all geektools init jobs done!"
 touch $DIRNAME/dev/.geektool_done
+sed -i "s/TOOL001/$TOOL00D1/g" $DIRNAME/tool_files/binary/geektool
+sed -i "s/TOOL002/$TOOL00D2/g" $DIRNAME/tool_files/binary/geektool
+sed -i "s/TOOL003/$TOOL00D3/g" $DIRNAME/tool_files/binary/geektool
+sed -i "s/TOOL004/$TOOL00D4/g" $DIRNAME/tool_files/binary/geektool
 else
 logcat "disabled geektool, don't load anything"
 $DIRNAME/dev/init $VALUE &
