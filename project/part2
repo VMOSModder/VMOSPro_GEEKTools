@@ -126,7 +126,7 @@ sed -i "s/TOOL003/$TOOL00D3/g" $DIRNAME/tool_files/binary/geektool
 sed -i "s/TOOL004/$TOOL00D4/g" $DIRNAME/tool_files/binary/geektool
 else
 logcat "disabled geektool, don't load anything"
-$DIRNAME/dev/init $VALUE &
+$DIRNAME/dev/init $VALUE_INIT &
 sleep 3
 fi
 elif [ "$NAME" == "init.tool" ]; then

@@ -664,7 +664,7 @@ update(){
 }
 
 keep_alive(){
-while true; do /tool_files/main/exbin/busybox sleep 10; done
+$tpm/exbin/busybox sleep 999999999
 }
 
 
