@@ -1,5 +1,5 @@
 #!/system/bin/sh
-huskydg=`/tool_files/binary/geektool check`
+huskydg=`/tool_files/binary/geektool check` 2>/dev/null
 priv_dir=/data/data/com.github.huskydg.vmostool
 
 
