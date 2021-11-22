@@ -664,7 +664,7 @@ update(){
 }
 
 keep_alive(){
-$tpm/exbin/busybox sleep 999999999
+$tpm/busybox/busybox.vmos sleep 999999999
 }
 
 

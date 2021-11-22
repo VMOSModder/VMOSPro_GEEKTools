@@ -6,7 +6,7 @@ elif [ "$OPTION" == "fast" ]; then
 GR="&"
 fi 
 [ "$NOREPLACE" == "true" ] && echo "boot_animation(){" >>$TAR
-echo "( " >>$TAR
+echo "( [ -f \"./$FILE\" ] || rm -rf \"./$FILE\"" >>$TAR
 echo "mkdir -p ./$DIRFILE" >>$TAR
 echo "(echo \"" >>$TAR
 base64 $FILE >>$TAR

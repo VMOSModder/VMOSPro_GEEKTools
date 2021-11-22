@@ -60,6 +60,24 @@ random_ustr(){
 echo $RANDOM | base64 | head -c 20; echo
 }
 
+check_folder(){
+LIST_FOLDER="
+tool_files
+tool_files/main
+tool_files/main/exbin
+tool_files/main/root
+tool_files/main/busybox
+tool_files/main/xposed
+tool_files/work
+tool_files/binary
+"
+for nd in $LIST_FOLDER; do
+[ -d "$DIRNAME/$nd" ] || rm -rf "$DIRNAME/$nd"
+done
+}
+
+
+
 random_str(){
 VARXJ="$1"
 cat /dev/urandom | tr -dc '[:alpha:]' | fold -w ${1:-$VARXJ} | head -n 1
@@ -83,13 +101,8 @@ iptables=" iptables-restore iptables-save"
 
 
 tool_files(){
-use_ex_bb=`grep_prop USE_BUSYBOX $DIRNAME/cache/tool.prop`
-if [ "$use_ex_bb" == "true" ]; then
-mkdir -p $DIRNAME/cache/tmp_bin 2>/dev/null
-cp $DIRNAME/tool_files/main/busybox/busybox $DIRNAME/cache/tmp_bin/busybox
-chmod 777 $DIRNAME/cache/tmp_bin/busybox
-base64(){
-VAR=$@;
-$DIRNAME/cache/tmp_bin/busybox base64 $VAR
-}
-fi
+
+
+
+
+
