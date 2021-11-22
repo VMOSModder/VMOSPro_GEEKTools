@@ -33,7 +33,7 @@ condition="$@"
 
 
 mod_prop(){
-NAME=$1; VARPROP=$2; FILE="$3"; [ ! "$FILE" ] && FILE=$tp/system.prop
+NAME=$1; VARPROP=$2; FILE="$3"; [ ! "$FILE" ] && FILE="/tool_files/system.prop"
 if [ "$NAME" ] && [ ! "$NAME" == "=" ]; then
 touch $FILE 2>$no
 echo "$NAME=$VARPROP" | while read prop; do export newprop=$(echo ${prop} | cut -d '=' -f1); sed -i "/${newprop}/d" $FILE; cat="`cat $FILE`"; echo $prop > $FILE; echo -n "$cat" >>$FILE; done 2>$no
@@ -273,8 +273,8 @@ set_perm_recursive() {
 
 
 
-TOOLVERCODE=20405
-TOOLVER=2.4.5
+TOOLVERCODE=20406
+TOOLVER=2.4.6
 
 [ -z $BOOTMODE ] && ps | grep zygote | grep -qv grep && BOOTMODE=true
 [ -z $BOOTMODE ] && ps -A 2>/dev/null | grep zygote | grep -qv grep && BOOTMODE=true

@@ -649,6 +649,8 @@ if [ -f $STARTER_PATH ]; then
     result=$?
     if [ ${result} -ne 0 ]; then
         echo "info: shizuku_starter exit with non-zero value $result"
+        setprop persist.geektool.shizuku 0
+        mod_prop persist.geektool.shizuku 0 2>$no
     else
         echo "info: shizuku_starter exit with 0"
         setprop persist.geektool.shizuku 1
@@ -1452,7 +1454,7 @@ if [ "$OPTR" == "1" ]; then
         
 
 
-elif [ "$OPTR" == "4" ]; then
+elif [ "$OPTR" == "3" ]; then
     echo "Please grant permission if prompted"
     echo "Contact su binary..."
     USER=$(daemonsu -c whoami) &>$no && SUREP="1"
