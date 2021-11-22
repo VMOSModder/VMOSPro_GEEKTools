@@ -5,8 +5,8 @@ priv_dir=/data/data/com.github.huskydg.vmostool
 
 
 
-TOOLVERAPP=2.4.4
-TOOLVERCODEAPP=20404
+TOOLVERAPP=2.4.5
+TOOLVERCODEAPP=20405
 
 p(){
 COLOR=$1;TEXT="$2";escape="$1"
@@ -171,7 +171,7 @@ my_name=`grep_prop USER_NAME /data/system/term.prop`
 PATH=/data/data/com.github.huskydg.vmostool/lib:$PATH
 pd gray "=============================================="
 p none "   Hello, "; pd light_green "$my_name";
-[ -f /tool_files/main/exbin/utils ] && pd light_green "   GeekTools INIT is installed and working" || pd light_red "   GeekTools INIT is installed but not working!"
+( [ "$TOOLVERCODE" -lt "$TOOLVERCODEAPP" ] && pd light_blue "   GeekTools INIT need to be updated" ) || ( [ -f /tool_files/main/exbin/utils ] && pd light_green "   GeekTools INIT is installed and working" || pd light_red "   GeekTools INIT is installed but not working!" )
 echo "   APP: $TOOLVERAPP($TOOLVERCODEAPP) - TOOL: $TOOLVER($TOOLVERCODE)"
 pd gray "=============================================="
 echo "   1 - Open GeekTools"
