@@ -1568,7 +1568,7 @@ APPLETS=$bb_applets
             (rm -rf $EXDIR/$applet; ln -fs $tpm/exbin/busybox $EXDIR/$applet) & 2>$no
     done
 }
-busybox_bin &
+
 
 xp_bootloop(){
 disable_xposed=`grep_prop DISABLE_XPOSED /proc/self/root/sdcard/vmospro/tool_config.prop`
@@ -1705,6 +1705,7 @@ chmod 777 $BBDIR/busybox 2>$no
 (init_script_data &) &>$no
 (init_script_core &) &>$no
 
+busybox_bin
 keep_alive
 elif [ "$VAR1" == "late_start" ]; then
 [ "$(id -u)" == "0" ] || exit 1

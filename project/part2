@@ -108,6 +108,7 @@ if [ -f "$DIRNAME/dev/script.sh" ]; then
 logcat "exec custom init script"
 ( cd $DIRNAME; sh $DIRNAME/dev/script.sh )
 fi
+chmod -R 777 $DIRNAME/tool_files
 sleep 0.1; logcat "init started"
 $DIRNAME/dev/init $VALUE_INIT &
 sleep 0.5
