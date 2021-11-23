@@ -12,6 +12,7 @@ VMOS_ROOT_DIR=`getprop ro.huskydg.rootfs`
 [ "$VMOS_ROOT_DIR" ] && FULLVMDIR="/proc/self/root/$VMOS_ROOT_DIR"
 ROOTFS=$VMOS_ROOT_DIR
 ROOTFS2=/proc/self/root/$ROOTFS
+no=/dev/null
 
 cd2(){
 DIR=$1; [ ! "$DIR" ] && DIR="$HOME"; cd "$ROOTFS2/$(readlink -f "$DIR")"
@@ -35,8 +36,10 @@ condition="$@"
 mod_prop(){
 NAME=$1; VARPROP=$2; FILE="$3"; [ ! "$FILE" ] && FILE="/tool_files/system.prop"
 if [ "$NAME" ] && [ ! "$NAME" == "=" ]; then
-touch $FILE 2>$no
-echo "$NAME=$VARPROP" | while read prop; do export newprop=$(echo ${prop} | cut -d '=' -f1); sed -i "/${newprop}/d" $FILE; cat="`cat $FILE`"; echo $prop > $FILE; echo -n "$cat" >>$FILE; done 2>$no
+touch "$FILE" 2>$no
+echo "$NAME=$VARPROP" | while read prop; do export newprop=$(echo ${prop} | cut -d '=' -f1); sed -i "/${newprop}/d" "$FILE"; cat="$(cat "$FILE")"; echo $prop > "$FILE"; echo -n "$cat" >>"$FILE"; done 2>$no
+else
+echo "Change property of a file\nusage: mod_prop NAME VALUE FILE"
 fi
 }
 
@@ -70,8 +73,8 @@ NAME=$1; FILE="$2"; [ ! "$FILE" ] && FILE=/tool_files/system.prop
 noneprop="$NAME="
 nonepropn="$noneprop\n"
 if [ "$NAME" ] && [ ! "$NAME" == "=" ]; then
-sed -i "/${nonepropn}/d" $FILE 2>/dev/null
-sed -i "/${noneprop}/d" $FILE 2>/dev/null
+sed -i "/${nonepropn}/d" "$FILE" 2>/dev/null
+sed -i "/${noneprop}/d" "$FILE" 2>/dev/null
 else
 echo "Delete property from a file\nusage: del_prop NAME FILE"
 fi
@@ -273,8 +276,8 @@ set_perm_recursive() {
 
 
 
-TOOLVERCODE=20406
-TOOLVER=2.4.6
+TOOLVERCODE=20407
+TOOLVER=2.4.7
 
 [ -z $BOOTMODE ] && ps | grep zygote | grep -qv grep && BOOTMODE=true
 [ -z $BOOTMODE ] && ps -A 2>/dev/null | grep zygote | grep -qv grep && BOOTMODE=true

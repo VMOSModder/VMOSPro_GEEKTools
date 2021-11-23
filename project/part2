@@ -82,7 +82,7 @@ chmod 777 $DIRNAME/init.rc; [ ! -f "$DIRNAME/dev/init" ] && cp $DIRNAME/init.rea
 TIMEZONE="$(getprop persist.sys.timezone)"
 mod_prop persist.sys.timezone "$TIMEZONE" $DIRNAME/default.prop && logcat "prop: change persist.sys.timezone to $TIMEZONE"
 mod_prop persist.sys.timezone "$TIMEZONE" $DIRNAME/defanlt.prop && logcat "prop: change persist.sys.timezone to $TIMEZONE"
-echo "persist.root.enable=1\nro.huskydg.initmode=true\nro.huskydg.geektool=20406\nro.huskydg.rootfs=$DIRNAME\nro.boot.flash.locked=1\nro.boot.verifiedbootstate=green\nro.boot.veritymode=enforcing\nro.boot.vbmeta.device_state=locked" >$DIRNAME/.tmp_props
+echo "persist.root.enable=1\nro.huskydg.initmode=true\nro.huskydg.geektool=20407\nro.huskydg.rootfs=$DIRNAME\nro.boot.flash.locked=1\nro.boot.verifiedbootstate=green\nro.boot.veritymode=enforcing\nro.boot.vbmeta.device_state=locked" >$DIRNAME/.tmp_props
 [ -f "/sdcard/vmospro/tool_config.prop" ] && disable_props=`grep_prop DISABLE_PROPS /sdcard/vmospro/tool_config.prop`
 [ ! "$disable_props" == "true" ] && echo "import /tool_files/system.prop" >>$DIRNAME/.tmp_props && logcat "load /tool_files/system.prop"
 rm -rf $DIRNAME/tool_files/work/script/late_start.d/random_props
@@ -92,12 +92,12 @@ RANDOMSERI=`random 8`
 mod_prop ro.serialno $RANDOMSERI $DIRNAME/$VMOSPROPS
 mod_prop ro.boot.serialno $RANDOMSERI $DIRNAME/$VMOSPROPS
 mod_prop ro.bluetooth.address "`random 2`:`random 2`:`random 2`:`random 2`:`random 2`:`random 2`" $DIRNAME/$VMOSPROPS
-echo "setprop rf.mac \"`random 2`:`random 2`:`random 2`:`random 2`:`random 2`:`random 2`\" $DIRNAME/$VMOSPROPS
-setprop vmprop.simserialnumber `random 20 number` $DIRNAME/$VMOSPROPS
-setprop vmprop.line1number `random 11 number` $DIRNAME/$VMOSPROPS
-setprop vmprop.imei `random 15 number` $DIRNAME/$VMOSPROPS
-setprop vmprop.wifibssid \"`random 2`:`random 2`:`random 2`:`random 2`:`random 2`:`random 2`\" $DIRNAME/$VMOSPROPS
-setprop vmprop.androidid `random 16` $DIRNAME/$VMOSPROPS" >$DIRNAME/tool_files/work/script/late_start.d/random_props
+echo "setprop rf.mac \"`random 2`:`random 2`:`random 2`:`random 2`:`random 2`:`random 2`\" 
+setprop vmprop.simserialnumber `random 20 number` 
+setprop vmprop.line1number `random 11 number` 
+setprop vmprop.imei `random 15 number` 
+setprop vmprop.wifibssid \"`random 2`:`random 2`:`random 2`:`random 2`:`random 2`:`random 2`\" 
+setprop vmprop.androidid `random 16` " >$DIRNAME/tool_files/work/script/late_start.d/random_props
 fi
 
 echo "##ORIGINAL PROPS HERE" >>$DIRNAME/.tmp_props
