@@ -276,10 +276,24 @@ set_perm_recursive() {
 
 
 
-TOOLVERCODE=20407
-TOOLVER=2.4.7
+TOOLVERCODE=20408
+TOOLVER=2.4.8
 
 [ -z $BOOTMODE ] && ps | grep zygote | grep -qv grep && BOOTMODE=true
 [ -z $BOOTMODE ] && ps -A 2>/dev/null | grep zygote | grep -qv grep && BOOTMODE=true
 [ -z $BOOTMODE ] && BOOTMODE=false
+
+
+
+
+if [ "$SHELL_NOCOLOR" == "1" -o "$TERM" == "dumb" ]; then
+p(){
+echo -n "$2";
+}
+pd(){
+echo "$2";
+}
+fi
+
+[ "$TERM" == "dumb" ] && clear(){ echo; }
 

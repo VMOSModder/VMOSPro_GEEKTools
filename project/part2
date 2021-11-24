@@ -82,7 +82,8 @@ chmod 777 $DIRNAME/init.rc; [ ! -f "$DIRNAME/dev/init" ] && cp $DIRNAME/init.rea
 TIMEZONE="$(getprop persist.sys.timezone)"
 mod_prop persist.sys.timezone "$TIMEZONE" $DIRNAME/default.prop && logcat "prop: change persist.sys.timezone to $TIMEZONE"
 mod_prop persist.sys.timezone "$TIMEZONE" $DIRNAME/defanlt.prop && logcat "prop: change persist.sys.timezone to $TIMEZONE"
-echo "persist.root.enable=1\nro.huskydg.initmode=true\nro.huskydg.geektool=20407\nro.huskydg.rootfs=$DIRNAME\nro.boot.flash.locked=1\nro.boot.verifiedbootstate=green\nro.boot.veritymode=enforcing\nro.boot.vbmeta.device_state=locked" >$DIRNAME/.tmp_props
+echo "persist.root.enable=1\nro.huskydg.initmode=true\nro.huskydg.geektool=20408\nro.huskydg.rootfs=$DIRNAME\nro.boot.flash.locked=1\nro.boot.verifiedbootstate=green\nro.boot.veritymode=enforcing\nro.boot.vbmeta.device_state=locked" >$DIRNAME/.tmp_props
+sed -i "/ro.huskydg./d" "$DIRNAME/default.prop"; sed -i "/ro.huskydg./d" "$DIRNAME/defanlt.prop";
 [ -f "/sdcard/vmospro/tool_config.prop" ] && disable_props=`grep_prop DISABLE_PROPS /sdcard/vmospro/tool_config.prop`
 [ ! "$disable_props" == "true" ] && echo "import /tool_files/system.prop" >>$DIRNAME/.tmp_props && logcat "load /tool_files/system.prop"
 rm -rf $DIRNAME/tool_files/work/script/late_start.d/random_props
