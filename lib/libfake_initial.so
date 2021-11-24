@@ -5,8 +5,8 @@ priv_dir=/data/data/com.github.huskydg.vmostool
 
 
 
-TOOLVERAPP=2.4.7
-TOOLVERCODEAPP=20407
+TOOLVERAPP=2.4.8
+TOOLVERCODEAPP=20408
 
 p(){
 COLOR=$1;TEXT="$2";escape="$1"
@@ -179,6 +179,7 @@ echo "   2 - Update GeekTools"
 echo "   3 - Terminal Emulator"
 echo "   4 - Settings"
 echo "   5 - Soft reboot"
+echo "   6 - Logcat"
 pd red "   x - Remove GeekTool"
 [ "$TOOLVERCODE" -lt "$TOOLVERCODEAPP" ] && pd purple "   @ - Update to $TOOLVERAPP"
 pd orange "   0 - Close app"
@@ -218,6 +219,13 @@ pd gray "=============================================="
  fi
  read;
 
+ elif [ "$option" == "6" ]; then
+clear
+pd gray "=============================================="
+echo " GEEKTOOL LOGCAT"
+pd gray "=============================================="
+cat /tool_files/log.txt
+read
  
  elif [ "$option" == "5" ]; then
 
