@@ -38,11 +38,13 @@ maybe_lnf ip6tables ip6tables-restore true &
 maybe_lnf ip6tables ip6tables-save true &
 maybe_lnf iptables iptables-restore true &
 maybe_lnf iptables iptables-save true &
-
 )
-chmod -R +w $DIRNAME/tool_files
-cat $DIRNAME/tool_files/work/.boot/delete.list | while read delfile; do 
-( [ "$delfile" ] && rm -rf "$DIRNAME/$delfile" && logcat "remove: $delfile" ) &
+chmod -R 777 $DIRNAME/tool_files
+cat $DIRNAME/tool_files/work/.boot/delete.list | while read delfile; do
+( [ ! "$delfile" ] && exit
+[ "$delfile" == "/system" ] && exit
+[ "$(readlink -f "$DIRNAME/$delfile")" == "$(readlink -f "$DIRNAME/system")" ] && exit
+[ "$delfile" ] && rm -rf "$DIRNAME/$delfile" && logcat "remove: $delfile" ) &
 done
 rm -rf $DIRNAME/tool_files/work/.boot/delete.list
 logcat geektools add new file to system
@@ -71,7 +73,7 @@ ln -s $DIRNAME/dev/init $DIRNAME/sbin/ueventd
 rm -rf $DIRNAME/sbin/watchdogd
 ln -s $DIRNAME/dev/init $DIRNAME/sbin/watchdogd
 logcat "add working path $work_path2 to PATH"
-echo "#INIT.RC BY HUSKYDG\nimport /init.rc.orig\n\non init\n   export PATH /sbin:/system/bin:/system/xbin:/system/sbin:/vendor/bin:$work_path2 \n" >$DIRNAME/init.rc
+echo "#INIT.RC BY HUSKYDG \non init\n   export PATH /sbin:/system/bin:/system/xbin:/system/sbin:/vendor/bin:$work_path2 \n\n\nimport /init.rc.orig\n\non init\n   export PATH /sbin:/system/bin:/system/xbin:/system/sbin:/vendor/bin:$work_path2 \n" >$DIRNAME/init.rc
 logcat "inject geektools services into init.rc"
 TOOL00D1=`random 5 str`
 TOOL00D2=`random 5 str`
@@ -82,7 +84,7 @@ chmod 777 $DIRNAME/init.rc; [ ! -f "$DIRNAME/dev/init" ] && cp $DIRNAME/init.rea
 TIMEZONE="$(getprop persist.sys.timezone)"
 mod_prop persist.sys.timezone "$TIMEZONE" $DIRNAME/default.prop && logcat "prop: change persist.sys.timezone to $TIMEZONE"
 mod_prop persist.sys.timezone "$TIMEZONE" $DIRNAME/defanlt.prop && logcat "prop: change persist.sys.timezone to $TIMEZONE"
-echo "persist.root.enable=1\nro.huskydg.initmode=true\nro.huskydg.geektool=20408\nro.huskydg.rootfs=$DIRNAME\nro.boot.flash.locked=1\nro.boot.verifiedbootstate=green\nro.boot.veritymode=enforcing\nro.boot.vbmeta.device_state=locked" >$DIRNAME/.tmp_props
+echo "persist.root.enable=1\nro.huskydg.initmode=true\nro.huskydg.geektool=20409\nro.huskydg.rootfs=$DIRNAME\nro.boot.flash.locked=1\nro.boot.verifiedbootstate=green\nro.boot.veritymode=enforcing\nro.boot.vbmeta.device_state=locked" >$DIRNAME/.tmp_props
 sed -i "/ro.huskydg./d" "$DIRNAME/default.prop"; sed -i "/ro.huskydg./d" "$DIRNAME/defanlt.prop";
 [ -f "/sdcard/vmospro/tool_config.prop" ] && disable_props=`grep_prop DISABLE_PROPS /sdcard/vmospro/tool_config.prop`
 [ ! "$disable_props" == "true" ] && echo "import /tool_files/system.prop" >>$DIRNAME/.tmp_props && logcat "load /tool_files/system.prop"

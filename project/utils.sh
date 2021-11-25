@@ -29,8 +29,19 @@ condition="$@"
 [ -f "$condition" ]
 }
 
+isexec(){
+condition="$@"
+[ -x "$condition" ]
+}
 
-
+fbin(){ (
+c="$1"; IFS=$":"; d="$2"; e="$3"
+check(){
+[ "$d" == "x" ] && isexec "$1" || isf "$1";
+}
+count=0;
+for n in $PATH; do if check "$n/$c"; then count=`expr $count + 1`; echo "$n/$c"; [ "$count" == "$e" ] && break; fi; done;
+) }
 
 
 mod_prop(){
@@ -276,12 +287,24 @@ set_perm_recursive() {
 
 
 
-TOOLVERCODE=20408
-TOOLVER=2.4.8
+TOOLVERCODE=20409
+TOOLVER=2.4.9
 
 [ -z $BOOTMODE ] && ps | grep zygote | grep -qv grep && BOOTMODE=true
 [ -z $BOOTMODE ] && ps -A 2>/dev/null | grep zygote | grep -qv grep && BOOTMODE=true
 [ -z $BOOTMODE ] && BOOTMODE=false
+
+package(){ (
+[ "$1" ] && USER_ID_TARGET="$1" || USER_ID_TARGET="$USER_ID"
+rawpkg=$(cat /data/system/packages.list | grep "$USER_ID_TARGET")
+for e in $rawpkg; do PACKAGE=$e; break; done;
+[ "$PACKAGE" ] && echo "$PACKAGE"
+) }
+
+apkpath(){ (
+a="$(pm path "${1}")"
+[ "$a" ] && echo "$a" | while read b; do echo "${b: 8}"; done
+) }
 
 
 
@@ -296,4 +319,5 @@ echo "$2";
 fi
 
 [ "$TERM" == "dumb" ] && clear(){ echo; }
-
+# reset error code to 0
+true;

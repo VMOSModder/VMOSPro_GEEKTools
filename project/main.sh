@@ -1,12 +1,13 @@
 #!/system/bin/sh
 #####################
 # VMOS Pro Tool script by HuskyDG
+OLD_PATH="$PATH"
 logcat(){
 TEXT=$@; echo "[`date +%d%m%y` `date +%T`]: $TEXT" >>$tp/log.txt
 }
 
 grep_pkg(){
-rawpkg=$(cat /data/system/packages.list | grep `id -u`)
+rawpkg=$(cat /data/system/packages.list | grep "$USER_ID")
 for e in $rawpkg; do package=$e; break; done;
 }
 
@@ -113,7 +114,7 @@ elif [ -f "$zip" ]; then
   pd gray "=============================================="
   echo "INSTALLING ZIP: $zip"
 pd gray "=============================================="
-[ "$(id -u)" == "0" ] || pd red "WARNING: Install zip as non-root user, maybe limited"
+[ "$USER_ID" == "0" ] || pd red "WARNING: Install zip as non-root user, maybe limited"
   
   echo "- Parsing the zip file..."
   /tool_files/main/exbin/unzip -o ./$zip 'META-INF/com/google/android/update-binary' -d .$TMPDIR &>/dev/null
@@ -335,6 +336,7 @@ else
             ln -s daemonsu $file 2>$no
         fi
     done
+[ "$(getprop ro.build.version.sdk)" == "22" ] && ln -fs $tp/binary/daemonsu /sbin/su
     echo "Set up permissions..."
     FILES="/tool_files/binary/daemonsu /tool_files/binary/ksud /tool_files/binary/ku.sud"
     for file in $FILES; do
@@ -431,7 +433,7 @@ chmod 777 $workpath/tool
 
 exbin_install(){
 rm -rf /system/etc/mkshrc
-echo "# Copyright (c) 2010, 2012, 2013, 2014\n#	Thorsten Glaser <tg@mirbsd.org>\n# This file is provided under the same terms as mksh.\n#-\n# Minimal /system/etc/mkshrc for Android\n#\n# Support: https://launchpad.net/mksh\n\np(){\nCOLOR=\$1;TEXT=\"\$2\";escape=\"\$1\"\n[ \"\$COLOR\" == \"black\" ] && escape=\"0;30\"\n[ \"\$COLOR\" == \"red\" ] && escape=\"0;31\"\n[ \"\$COLOR\" == \"green\" ] && escape=\"0;32\"\n[ \"\$COLOR\" == \"orange\" ] && escape=\"0;33\"\n[ \"\$COLOR\" == \"blue\" ] && escape=\"0;34\"\n[ \"\$COLOR\" == \"purple\" ] && escape=\"0;35\"\n[ \"\$COLOR\" == \"cyan\" ] && escape=\"0;36\"\n[ \"\$COLOR\" == \"light_gray\" ] && escape=\"0;37\"\n[ \"\$COLOR\" == \"gray\" ] && escape=\"1;30\"\n[ \"\$COLOR\" == \"light_red\" ] && escape=\"1;31\"\n[ \"\$COLOR\" == \"light_green\" ] && escape=\"1;32\"\n[ \"\$COLOR\" == \"yellow\" ] && escape=\"1;33\"\n[ \"\$COLOR\" == \"light_blue\" ] && escape=\"1;34\"\n[ \"\$COLOR\" == \"light_purple\" ] && escape=\"1;35\"\n[ \"\$COLOR\" == \"light_cyan\" ] && escape=\"1;36\"\n[ \"\$COLOR\" == \"white\" ] && escape=\"1;37\"\n[ \"\$COLOR\" == \"none\" ] && escape=\"0\"\ncode=\"[\${escape}m\"\nend_code=\"[0m\"\necho -n \"\$code\$TEXT\$end_code\"\n}\npd(){\np \"\$1\" \"\$2\"; echo\n}\ngrep_prop() {\n  local REGEX=\"s/^\$1=//p\"\n  shift\n  local FILES=\$@\n  [ -z \"\$FILES\" ] && FILES='/system/build.prop'\n  cat \$FILES 2>/dev/null | dos2unix | sed -n \"\$REGEX\" | head -n 1\n}\n\ncolor(){\n[ \"\$1\" == \"0\" -o \"\$1\" == \"false\" ] && export SHELL_NOCOLOR=1 || export SHELL_NOCOLOR=0\n}\n\nUSER_NAME=\`grep_prop USER_NAME /data/system/term.prop | tr \" \" \"_\"\` 2>/dev/null; [ ! \"\$USER_NAME\" ] && USER_NAME=HuskyDG\nGNAME=\"\$USER_NAME\"\n: \${HOSTNAME:=\$GNAME}\n: \${HOSTNAME:=android}\n: \${TMPDIR:=/data/local/tmp}\nexport HOSTNAME TMPDIR\nINITIAL_CMD=\`grep_prop INITIAL_CMD /data/system/term.prop\` 2>/dev/null\n\$INITIAL_CMD\nif (( USER_ID )); then PS1='\$';CL=light_blue; else PS1='#';CL=yellow; fi\nPS4='[\$EPOCHREALTIME] '; PS1='\${|\n	local e=\$?\n  [ \"\$HOME\" ] && [ \"\$PWD\" == \"\$HOME\" ] && PWD=\"~\"\n  PWD2=\`p green \"\$PWD\"\`\n  GUID=\$(whoami)\n  [ \"\$SHELL_NOCOLOR\" == \"1\" ] && PRINTNAME=\"\$HOSTNAME(\$GUID)\" || PRINTNAME=\`p \${CL} \"\$HOSTNAME(\$GUID)\"\`\n  [ \"\$SHELL_NOCOLOR\" == \"1\" ] && PWD2=\"\$PWD\"\n	(( e )) && REPLY+=\"\$e|\"\n\n	return \$e\n}\$PRINTNAME:\${PWD2:-?} '\"\$PS1 \"\n\n if [ \"\$SHELL_NOCOLOR\" == \"1\" -o \"\$TERM\" == \"dumb\" ]; then\np(){\necho -n \"\$2\";\n}\npd(){\necho \"\$2\";\n}\nfi\n\n[ \"\$TERM\" == \"dumb\" ] && clear(){ echo; }\n\n " >/system/etc/mkshrc
+echo "# Copyright (c) 2010, 2012, 2013, 2014\n#	Thorsten Glaser <tg@mirbsd.org>\n# This file is provided under the same terms as mksh.\n#-\n# Minimal /system/etc/mkshrc for Android\n#\n# Support: https://launchpad.net/mksh\n \n if [ \"\$SHELL_NOCOLOR\" == \"1\" -o \"\$TERM\" == \"dumb\" ]; then\np(){\necho -n \"\$2\";\n}\npd(){\necho \"\$2\";\n}\nfi\n\n[ \"\$TERM\" == \"dumb\" ] && clear(){ echo; }\n\n\np(){\nCOLOR=\$1;TEXT=\"\$2\";escape=\"\$1\"\n[ \"\$COLOR\" == \"black\" ] && escape=\"0;30\"\n[ \"\$COLOR\" == \"red\" ] && escape=\"0;31\"\n[ \"\$COLOR\" == \"green\" ] && escape=\"0;32\"\n[ \"\$COLOR\" == \"orange\" ] && escape=\"0;33\"\n[ \"\$COLOR\" == \"blue\" ] && escape=\"0;34\"\n[ \"\$COLOR\" == \"purple\" ] && escape=\"0;35\"\n[ \"\$COLOR\" == \"cyan\" ] && escape=\"0;36\"\n[ \"\$COLOR\" == \"light_gray\" ] && escape=\"0;37\"\n[ \"\$COLOR\" == \"gray\" ] && escape=\"1;30\"\n[ \"\$COLOR\" == \"light_red\" ] && escape=\"1;31\"\n[ \"\$COLOR\" == \"light_green\" ] && escape=\"1;32\"\n[ \"\$COLOR\" == \"yellow\" ] && escape=\"1;33\"\n[ \"\$COLOR\" == \"light_blue\" ] && escape=\"1;34\"\n[ \"\$COLOR\" == \"light_purple\" ] && escape=\"1;35\"\n[ \"\$COLOR\" == \"light_cyan\" ] && escape=\"1;36\"\n[ \"\$COLOR\" == \"white\" ] && escape=\"1;37\"\n[ \"\$COLOR\" == \"none\" ] && escape=\"0\"\ncode=\"[\${escape}m\"\nend_code=\"[0m\"\necho -n \"\$code\$TEXT\$end_code\"\n}\npd(){\np \"\$1\" \"\$2\"; echo\n}\ngrep_prop() {\n  local REGEX=\"s/^\$1=//p\"\n  shift\n  local FILES=\$@\n  [ -z \"\$FILES\" ] && FILES='/system/build.prop'\n  cat \$FILES 2>/dev/null | dos2unix | sed -n \"\$REGEX\" | head -n 1\n}\n\ncolor(){\n[ \"\$1\" == \"0\" -o \"\$1\" == \"false\" ] && export SHELL_NOCOLOR=1 || export SHELL_NOCOLOR=0\n}\n\nUSER_NAME=\`grep_prop USER_NAME /data/system/term.prop | tr \" \" \"_\"\` 2>/dev/null; [ ! \"\$USER_NAME\" ] && USER_NAME=HuskyDG\nGNAME=\"\$USER_NAME\"\n: \${HOSTNAME:=\$GNAME}\n: \${HOSTNAME:=android}\n: \${TMPDIR:=/data/local/tmp}\nexport HOSTNAME TMPDIR\nINITIAL_CMD=\`grep_prop INITIAL_CMD /data/system/term.prop\` 2>/dev/null\n\$INITIAL_CMD\nif (( USER_ID )); then PS1='\$';CL=light_blue; else PS1='#';CL=yellow; fi\nPS4='[\$EPOCHREALTIME] '; PS1='\${|\n	local e=\$?\n  [ \"\$HOME\" ] && [ \"\$PWD\" == \"\$HOME\" ] && PWD=\"~\"\n  PWD2=\`p green \"\$PWD\"\`\n  GUID=\$(whoami)\n  [ \"\$SHELL_NOCOLOR\" == \"1\" ] && PRINTNAME=\"\$HOSTNAME(\$GUID)\" || PRINTNAME=\`p \${CL} \"\$HOSTNAME(\$GUID)\"\`\n  [ \"\$SHELL_NOCOLOR\" == \"1\" ] && PWD2=\"\$PWD\"\n	(( e )) && REPLY+=\"\$e|\"\n\n	return \$e\n}\$PRINTNAME:\${PWD2:-?} '\"\$PS1 \"\n " >/system/etc/mkshrc
 }
 
 bb_applets="[ [[ acpid adjtimex ar arch arp arping ash awk base32 base64 basename bbconfig beep blkdiscard blkid blockdev brctl bunzip2 bzcat bzip2 cal cat chat chattr chcon chgrp chmod chown chroot chrt chvt cksum clear cmp comm conspy cp cpio crond crontab cttyhack cut date dc dd deallocvt depmod devmem df dhcprelay diff dirname dmesg dnsd dnsdomainname dos2unix du dumpkmap dumpleases echo ed egrep eject env ether-wake expand expr factor fakeidentd false fatattr fbset fbsplash fdflush fdformat fdisk fgconsole fgrep find findfs flash_eraseall flash_lock flash_unlock flock fold free freeramdisk fsck fsck.minix fsfreeze fstrim fsync ftpd ftpget ftpput fuser getenforce getopt grep groups gunzip gzip hd hdparm head hexdump hexedit hostname httpd hush hwclock id ifconfig ifdown ifenslave ifplugd ifup inetd inotifyd insmod install ionice iostat ip ipaddr ipcalc ipcrm ipcs iplink ipneigh iproute iprule iptunnel kbd_mode kill killall killall5 klogd less link ln loadfont loadkmap logread losetup ls lsattr lsmod lsof lspci lsscsi lsusb lzcat lzma lzop lzopcat makedevs makemime man md5code_get mesg microcom mim mkdir mkdosfs mke2fs mkfifo mkfs.ext2 mkfs.minix mkfs.reiser mkfs.vfat mknod mkswap mktemp modinfo modprobe more mount mountpoint mpstat mv nameif nanddump nandwrite nbd-client nc netstat nice nl nmeter nohup nologin nslookup nuke od openvt partprobe paste patch pgrep pidof ping ping6 pipe_progress pivot_root pkill pmap popmaildir poweroff powertop printenv printf ps pscan pstree pwd pwdx raidautorun rdate rdev readlink readprofile realpath reboot reformime renice reset resize resume rev rfkill rm rmdir rmmod route rtcwake run-init run-parts runcon rx script scriptreplay sed selinuxenabled sendmail seq sestatus setconsole setenforce setfattr setfont setkeycodes setlogcons setpriv setserial setsid setuidgid sh sha1sum sha256sum sha3sum sha512sum showkey shred shuf slattach sleep smemcap sort split ssl_client start-stop-daemon stat strings stty sum svc svok swapoff swapon switch_root sync sysctl syslogd tac tail tar tc tcpsvd tee telnet telnetd test tftp tftpd time timeout top touch tr traceroute traceroute6 true truncate ts tty ttysize tunctl tune2fs ubiattach ubidetach ubimkvol ubirename ubirmvol ubirsvol ubiupdatevol udhcpc udhcpc6 udhcpd udpsvd uevent umount uname uncompress unexpand uniq unix2dos unlink unlzma unlzop unshare unxz unzip uptime usleep uudecode uuencode vconfig vi volname watch watchdog wc which whoami whois xargs xxd xz xzcat yes zcat zcip"
@@ -710,7 +712,7 @@ fi
 p none "Android level: ";pd light_blue "$API ($BIT-bit)"
 [ "$(getprop ro.huskydg.initmode)" == "true" ] && p light_green "INIT mode" || p light_red "INIT-less mode"
 p gray " | "
-if [ "$(id -u)" == "0" ]; then
+if [ "$USER_ID" == "0" ]; then
  pd light_green "Root access"
 else
  pd light_red "Normal access"
@@ -790,7 +792,7 @@ pd gray "       Grant special access by using Shizuku API"
 pd light_green "MENU"
 p none " $ - Clean ";p gray "|";
 p none " ? - MemCheck ";p gray "|";
-[ ! "$(id -u)" == "0" ] && p none " # - Root Mode " && p gray "|";
+[ ! "$USER_ID" == "0" ] && p none " # - Root Mode " && p gray "|";
 pd none " 0 - Exit");
 p none "[CHOICE]: "
 }
@@ -1242,7 +1244,7 @@ if [ -f "$zip" ]; then
 fi
 
 elif [ "$ans" == "#" ]; then
-[ ! "$(id -u)" == "0" ] && sudo tool && exit
+[ ! "$USER_ID" == "0" ] && sudo tool && exit
 pd red "You can also run as root mode with Shizuku app"
 pd red "by running this command: \"rish -c tool\""
 
@@ -1375,12 +1377,12 @@ echo "   version 1.9 By HuskyDG"
 pd gray "=============================================="
 test_rw
 workpath
-ENVPATH="/sbin $workpath /system/bin /system/sbin /system/xbin /vendor/bin"
-for e in $ENVPATH; do
-[ -f "$e/daemonsu" ] && SUBIN="$e/daemonsu"
+find_daemonsu(){ (
+PATH=$OLD_PATH;
+fbin su e 1
+) }
+SUBIN=$(find_daemonsu)
 SUBASE=${SUBIN%/*}
-[ -x "$e/daemonsu" ] && break;
-done
 if [ -f "$SUBIN" ]; then
 
  if [ "$SDK" == "19" ]; then
@@ -1504,9 +1506,9 @@ elif [ "$VAR1" == "install_utils" ]; then
 install_utils
 elif [ "$VAR1" == "post-fs-data" ]; then
 logcat post-fs-data triggered &
-([ "$(id -u)" == "0" ] && logcat login as root user || ( logcat "wrong user: `whoami` not root user" ) )&
+([ "$USER_ID" == "0" ] && logcat login as root user || ( logcat "wrong user: $USER_ID is not root user" ) )&
 logcat "check id user: `id`" &
-[ "$(id -u)" == "0" ] || exit 1
+[ "$USER_ID" == "0" ] || exit 1
 (install_utils && logcat load utils) &
 (make_systemroot) &
 execute_script(){
@@ -1678,7 +1680,7 @@ chmod 777 $BBDIR/busybox 2>$no
 busybox_bin
 keep_alive
 elif [ "$VAR1" == "late_start" ]; then
-[ "$(id -u)" == "0" ] || exit 1
+[ "$USER_ID" == "0" ] || exit 1
 BBDIR=$tpm/busybox
 EXDIR=$tpm/exbin
 SDK=$(getprop ro.build.version.sdk)
@@ -1687,6 +1689,7 @@ AARCH=$(getprop ro.product.cpu.abi);
 
 
 su_bind(){
+workpath
 SUBIN=/sbin/daemonsu
 [ -f "$tp/binary/daemonsu" ] && SUBIN=$tp/binary/daemonsu
 SUBASE=${SUBIN%/*}
@@ -1696,6 +1699,7 @@ FILES="su sx"
 for file in $FILES; do
         ln -fs daemonsu $file
 done )
+( [ "$(getprop ro.build.version.sdk)" == "22" ] && ln -fs $tp/binary/daemonsu /sbin/su )
 fi
 
 }
@@ -1899,6 +1903,9 @@ done
 
 }
 ( microsd_service ) &
+
+( [ "$(getprop ro.build.version.sdk)" == "22" ] && ln -fs $tp/binary/geektool /sbin/tool ) &
+
 keep_alive
 elif [ "$VAR1" == "early-init" ]; then
 early(){
@@ -1907,7 +1914,7 @@ echo nothing
 keep_alive
 elif [ "$VAR1" == "init" ]; then
 setprop ro.huskydg.initmode false
-[ "$(id -u)" == "0" ] || exit 1
+[ "$USER_ID" == "0" ] || exit 1
 until [ -f "/system_root/dev/.geektool_done" ]; do wait; done;
 cd $tpm/root || exit 1
 mkdir bin
@@ -1937,5 +1944,6 @@ cd $MDIR;
 done
 fi
 }
+
 
 ( no=/dev/null; tp=/tool_files; tpw=$tp/work; tpm=$tp/main; MAIN=$0; VAR1=$1; VAR2=$2; init_level=4;bb=/tool_files/main/busybox/busybox;PATH=/sbin:/system/bin:/system/xbin:/system/sbin:/vendor/bin:/tool_files/main/exbin:/tool_files/binary;tbox=/system/bin/toybox; . /tool_files/main/exbin/utils 2>$no; program $@ ) 2>/dev/null
