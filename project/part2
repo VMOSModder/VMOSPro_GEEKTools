@@ -10,8 +10,7 @@ rm -rf $DIRNAME/dev/.geektool_unblock
 rm -rf $DIRNAME/dev/.geektool_done
 mv -f $DIRNAME/tool_files/log.txt $DIRNAME/tool_files/._old_log.txt
 if [ "$(grep_prop DISABLE_GEEKTOOL /sdcard/vmospro/tool_config.prop)" != "true" ]; then
-oldpath="$(cat $DIRNAME/tool_files/binary/.workpath)"
-[ "${oldpath%/*}" == "/system_root/dev" ] && rm -rf "$DIRNAME/$oldpath"
+rm -rf "$DIRNAME/dev/work-geektool"
 logcat "geektools init started on pre-init stage"
 if [ -f "$DIRNAME/vmos.prop" ]; then
 logcat "find prop_file: /vmos.prop"
@@ -54,8 +53,7 @@ rm -rf $DIRNAME/tool_files/work/.boot/system/.*
 logcat "extract all geektools files to /tool_files/main"
 tool_files &
 mkdir -p $DIRNAME/tool_files/binary
-random_str=`random 10 str`
-rm -rf $DIRNAME/dev/bin.*
+random_str=work-geektool
 #setup new PATH variable to place su binary for hiding root
 base_path=$DIRNAME/tool_files/binary
 base_path2=/tool_files/binary
@@ -84,7 +82,7 @@ chmod 777 $DIRNAME/init.rc; [ ! -f "$DIRNAME/dev/init" ] && cp $DIRNAME/init.rea
 TIMEZONE="$(getprop persist.sys.timezone)"
 mod_prop persist.sys.timezone "$TIMEZONE" $DIRNAME/default.prop && logcat "prop: change persist.sys.timezone to $TIMEZONE"
 mod_prop persist.sys.timezone "$TIMEZONE" $DIRNAME/defanlt.prop && logcat "prop: change persist.sys.timezone to $TIMEZONE"
-echo "persist.root.enable=1\nro.huskydg.initmode=true\nro.huskydg.geektool=20409\nro.huskydg.rootfs=$DIRNAME\nro.boot.flash.locked=1\nro.boot.verifiedbootstate=green\nro.boot.veritymode=enforcing\nro.boot.vbmeta.device_state=locked" >$DIRNAME/.tmp_props
+echo "persist.root.enable=1\nro.huskydg.initmode=true\nro.huskydg.geektool=20410\nro.huskydg.rootfs=$DIRNAME\nro.boot.flash.locked=1\nro.boot.verifiedbootstate=green\nro.boot.veritymode=enforcing\nro.boot.vbmeta.device_state=locked" >$DIRNAME/.tmp_props
 sed -i "/ro.huskydg./d" "$DIRNAME/default.prop"; sed -i "/ro.huskydg./d" "$DIRNAME/defanlt.prop";
 [ -f "/sdcard/vmospro/tool_config.prop" ] && disable_props=`grep_prop DISABLE_PROPS /sdcard/vmospro/tool_config.prop`
 [ ! "$disable_props" == "true" ] && echo "import /tool_files/system.prop" >>$DIRNAME/.tmp_props && logcat "load /tool_files/system.prop"
@@ -95,28 +93,23 @@ RANDOMSERI=`random 8`
 mod_prop ro.serialno $RANDOMSERI $DIRNAME/$VMOSPROPS
 mod_prop ro.boot.serialno $RANDOMSERI $DIRNAME/$VMOSPROPS
 mod_prop ro.bluetooth.address "`random 2`:`random 2`:`random 2`:`random 2`:`random 2`:`random 2`" $DIRNAME/$VMOSPROPS
-echo "setprop rf.mac \"`random 2`:`random 2`:`random 2`:`random 2`:`random 2`:`random 2`\" 
+( echo "setprop rf.mac \"`random 2`:`random 2`:`random 2`:`random 2`:`random 2`:`random 2`\" 
 setprop vmprop.simserialnumber `random 20 number` 
 setprop vmprop.line1number `random 11 number` 
 setprop vmprop.imei `random 15 number` 
 setprop vmprop.wifibssid \"`random 2`:`random 2`:`random 2`:`random 2`:`random 2`:`random 2`\" 
-setprop vmprop.androidid `random 16` " >$DIRNAME/tool_files/work/script/late_start.d/random_props
+setprop vmprop.androidid `random 16` " >$DIRNAME/tool_files/work/script/late_start.d/random_props ) &
 fi
 
 echo "##ORIGINAL PROPS HERE" >>$DIRNAME/.tmp_props
 cat $DIRNAME/$VMOSPROPS >>$DIRNAME/.tmp_props
 mv -f $DIRNAME/$VMOSPROPS $DIRNAME/tool_files/vmos.prop
 mv -f $DIRNAME/.tmp_props $DIRNAME/$VMOSPROPS
-if [ -f "$DIRNAME/dev/script.sh" ]; then
-logcat "exec custom init script"
-( cd $DIRNAME; sh $DIRNAME/dev/script.sh )
-fi
 chmod -R 777 $DIRNAME/tool_files
 sleep 0.1; logcat "init started"
 $DIRNAME/dev/init $VALUE_INIT &
-sleep 0.5
-rm -rf $DIRNAME/vmos.prop
-rm -rf $DIRNAME/system.prop
+sleep 0.2
+mv -f $DIRNAME/tool_files/vmos.prop $DIRNAME/$VMOSPROPS
 chmod -R 777 $DIRNAME/tool_files
 sleep 2
 # sh $DIRNAME/init.tool

@@ -71,8 +71,8 @@ tool_files/main/xposed
 tool_files/work
 tool_files/binary
 "
-for nd in $LIST_FOLDER; do
-[ -d "$DIRNAME/$nd" ] || rm -rf "$DIRNAME/$nd"
+for ndxfiles in $LIST_FOLDER; do
+[ -d "$DIRNAME/$ndxfiles" ] || rm -rf "$DIRNAME/$ndxfiles"
 done
 }
 

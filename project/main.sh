@@ -1,6 +1,9 @@
 #!/system/bin/sh
 #####################
 # VMOS Pro Tool script by HuskyDG
+
+
+
 OLD_PATH="$PATH"
 logcat(){
 TEXT=$@; echo "[`date +%d%m%y` `date +%T`]: $TEXT" >>$tp/log.txt
@@ -91,7 +94,7 @@ fi
 }
 
 workpath(){
-workpath="$(cat $tp/binary/.workpath)"
+workpath=/tool_files/binary
 }
 
 
@@ -198,7 +201,7 @@ launch_shizuku_process(){
 
 if [ "$(cat /data/system/packages.list | grep 'moe.shizuku.privileged.api ')" ] && [ -f "$tpm/root/bin/rish" ]; then
 mkdir -p /system_root/dev/vm-geektool/$$
-touch /system_root/dev/vm-geektool/$$/shizuku
+echo "shizuku_start" > /system_root/dev/vm-geektool/$$/script
 until [ -f "/system_root/dev/vm-geektool/$$/.done" ]; do
 sleep 0.1
 done
@@ -217,7 +220,16 @@ fi
 install_subinary(){
 VAR1="$1"
 mkdir -p /system_root/dev/vm-geektool/$$
-echo "$VAR1" >/system_root/dev/vm-geektool/$$/root
+echo "daemonsu_start $VAR1" >/system_root/dev/vm-geektool/$$/script
+until [ -f "/system_root/dev/vm-geektool/$$/.done" ]; do
+sleep 0.1
+done
+}
+
+daemon_exec(){
+VAR1="$1"
+mkdir -p /system_root/dev/vm-geektool/$$
+echo "daemonsu_start $VAR1" >/system_root/dev/vm-geektool/$$/script
 until [ -f "/system_root/dev/vm-geektool/$$/.done" ]; do
 sleep 0.1
 done
@@ -1495,6 +1507,9 @@ fi
 
 }
 
+
+
+
 program(){
 VAR1=$1; VAR2=$2;
 
@@ -1506,6 +1521,7 @@ elif [ "$VAR1" == "install_utils" ]; then
 install_utils
 elif [ "$VAR1" == "post-fs-data" ]; then
 logcat post-fs-data triggered &
+(switch_userspace &) &>$no
 ([ "$USER_ID" == "0" ] && logcat login as root user || ( logcat "wrong user: $USER_ID is not root user" ) )&
 logcat "check id user: `id`" &
 [ "$USER_ID" == "0" ] || exit 1
@@ -1523,10 +1539,86 @@ touch /system_root/dev/.geektool_unblock
 
 (execute_script &) &>$no
 
+switch_userspace(){ (
+cd /
+setprop huskydg.tool.dualspace false
+if [ -d "/storage/emulated/0" ]; then
+SDCARD="/storage/emulated/0"
+else
+SDCARD="/storage/sdcard"
+fi
+
+if [ -f "$tpw/.boot/clear" ]; then
+  rm -rf /data/space
+fi
+
+rm -rf $tpw/.boot/clear
+
+mkdir -p /data/space/0
+mkdir -p /data/space/1
+
+list_directories="data app misc misc_ce misc_de system system_ce system_de"
+list_directories2="data app sdcard misc misc_ce misc_de system system_ce system_de
+"
+its_user_primary=1; its_userx=0;
+[ -f "$tpw/.boot/dual" ] && its_user_primary=0 && its_userx=1 && setprop huskydg.tool.dualspace true
+[ "$(getprop huskydg.tool.dualspace)" == "true" ] && logcat boot secondary userspace || logcat boot primary userspace
+  
+  if [ ! -f "/data/space/$its_user_primary/.release" ]; then
+    dataname1="/data/space/$its_user_primary"
+    dataname2="/data/space/$its_userx"
+    for vbk in $list_directories2; do
+    mkdir $dataname1/$vbk
+    done
+    touch $dataname1/.release
+    touch $dataname2/.release
+  fi
+  
+  if [ ! -d "/data/space/$its_user_primary/sdcard" ]; then
+      mv $SDCARD /data/space/0/sdcard
+  fi
+  if [ ! -d "/data/space/$its_user_primary/ext_app" ]; then
+      mv /mnt/asec /data/space/0/ext_app
+  fi
+  for datadir in $list_directories; do
+    user="$its_user_primary"
+    if [ ! -d "/data/space/$user/$datadir" ]; then
+          mv /data/$datadir /data/space/$user/$datadir
+    fi
+    user="$its_userx"
+    if [ -d "/data/space/$user/$datadir" ]; then
+        mv /data/space/$user/$datadir /data/$datadir
+    else
+        mkdir /data/$datadir
+    fi
+  done
+  if [ -d "/data/space/$its_userx/app" ]; then
+      mv /data/space/$its_userx/app /data/app
+  else
+      mkdir /data/app
+  fi
+  if [ -d "/data/space/$its_userx/data" ]; then
+      mv /data/space/$its_userx/data /data/data
+  else
+      mkdir /data/data
+  fi
+  if [ -d "/data/space/$its_userx/sdcard" ]; then
+      mv /data/space/$its_userx/sdcard $SDCARD
+  else
+      [ -d "/sdcard" ] && mkdir $SDCARD
+  fi
+  if [ -d "/data/space/$its_userx/ext_app" ]; then
+      mv /data/space/$its_userx/ext_app /mnt/asec
+  else
+      mkdir /mnt/asec
+  fi
+) }
 
 
+(swapper_bin &)
 
 busybox_bin(){
+switch_userspace
 logcat load busybox
 BBDIR=$tpm/busybox
 EXDIR=$tpm/exbin
@@ -1561,107 +1653,10 @@ fi
 
 
 
-init_script_data(){
 
-setprop huskydg.tool.dualspace false
-if [ -d "/storage/emulated/0" ]; then
-SDCARD="/storage/emulated/0"
-else
-SDCARD="/storage/sdcard"
-fi
-make_folder
-if [ -f "$tpw/.boot/clear" ]; then
-  rm -rf /data/space
-fi
-
-rm -rf $tpw/.boot/clear
-
-mkdir -p /data/space/0
-mkdir -p /data/space/1
-
-DIRS="
-misc
-misc_ce
-misc_de
-system
-system_ce
-system_de
-"
-OBJS="
-data
-app
-sdcard
-misc
-misc_ce
-misc_de
-system
-system_ce
-system_de
-"
-US=1; USX=0;
-[ -f "$tpw/.boot/dual" ] && US=0 && USX=1 && setprop huskydg.tool.dualspace true
-[ "$(getprop huskydg.tool.dualspace)" == "true" ] && logcat boot secondary userspace || logcat boot primary userspace
-  
-  if [ ! -f "/data/space/$US/.release" ]; then
-    DF="/data/space/$US"
-    DE="/data/space/$USX"
-    for var in $OBJS; do
-    mkdir $DF/$var
-    done
-    touch $DF/.release
-    touch $DE/.release
-  fi
-  if [ ! -d "/data/space/$US/data" ]; then
-      mv /data/data /data/space/0/data
-  fi
-  if [ ! -d "/data/space/$US/sdcard" ]; then
-      mv $SDCARD /data/space/0/sdcard
-  fi
-  if [ ! -d "/data/space/$US/app" ]; then
-      mv /data/app /data/space/0/app
-  fi
-  if [ ! -d "/data/space/$US/ext_app" ]; then
-      mv /mnt/asec /data/space/0/ext_app
-  fi
-  for dir in $DIRS; do
-    user="$US"
-    if [ ! -d "/data/space/$user/$dir" ]; then
-          mv /data/$dir /data/space/$user/$dir
-    fi
-    user="$USX"
-    if [ -d "/data/space/$user/$dir" ]; then
-        mv /data/space/$user/$dir /data/$dir
-    else
-        mkdir /data/$dir
-    fi
-  done
-  if [ -d "/data/space/$USX/app" ]; then
-      mv /data/space/$USX/app /data/app
-  else
-      mkdir /data/app
-  fi
-  if [ -d "/data/space/$USX/data" ]; then
-      mv /data/space/$USX/data /data/data
-  else
-      mkdir /data/data
-  fi
-  if [ -d "/data/space/$USX/sdcard" ]; then
-      mv /data/space/$USX/sdcard $SDCARD
-  else
-      [ -d "/sdcard" ] && mkdir $SDCARD
-  fi
-  if [ -d "/data/space/$USX/ext_app" ]; then
-      mv /data/space/$USX/ext_app /mnt/asec
-  else
-      mkdir /mnt/asec
-  fi
-
-
-
-}
 
 init_script_core(){
-rm -rf $TOOLTMP 2>$no
+rm -rf $tpm/.tmp 2>$no
 mkdir -p $TOOLTMP 2>$no
 mkdir -p $tpw/script/late_start.d
 mkdir -p $tpw/script/post-fs-data.d
@@ -1672,15 +1667,16 @@ chmod 777 $BBDIR/busybox 2>$no
 
 }
 
-(wrapper_bin) &
 
-(init_script_data &) &>$no
+
 (init_script_core &) &>$no
 
 busybox_bin
 keep_alive
+
 elif [ "$VAR1" == "late_start" ]; then
 [ "$USER_ID" == "0" ] || exit 1
+
 BBDIR=$tpm/busybox
 EXDIR=$tpm/exbin
 SDK=$(getprop ro.build.version.sdk)
@@ -1721,10 +1717,6 @@ sh "$shscript"
 logcat script "$shscript" exit with code $? ) &
 done
 
-wait_load;wait_load
-rm -rf $tpw/.boot/config.sh
-rm -rf $tpw/.boot/system/*
-rm -rf $tpw/.boot/system/.*
 
 
 }
@@ -1837,14 +1829,13 @@ done
 }
 
 daemon_eviroment(){
-TRIGGER="$1"; COMMAND="$2"
 while true; do
 sleep 0.5
-find /system_root/dev/vm-geektool/*/$TRIGGER -prune | while read obj; do
+find /system_root/dev/vm-geektool/*/script -prune | while read obj; do
 VALUE_TRIGGER="$(cat "$obj")"
 rm -rf "$obj"
 ( DIRNAME=${obj%/*}; BASENAME=$(basename "$DIRNAME");
-"$COMMAND" "$VALUE_TRIGGER" >/proc/$BASENAME/fd/0
+$VALUE_TRIGGER >/proc/$BASENAME/fd/0
 err_code=$?
 rm -rf $DIRNAME/.done
 echo "$err_code" > "$DIRNAME/.done"
@@ -1857,8 +1848,7 @@ done
 
 start_environment(){
 logcat "start geektool script daemon process"
-( daemon_eviroment shizuku shizuku_start ) &
-( daemon_eviroment root daemonsu_start ) &
+( daemon_eviroment ) &
 }
 
 
