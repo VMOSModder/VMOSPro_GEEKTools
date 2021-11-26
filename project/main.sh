@@ -1615,7 +1615,7 @@ its_user_primary=1; its_userx=0;
 ) }
 
 
-(swapper_bin &)
+(wrapper_bin &)
 
 busybox_bin(){
 switch_userspace
