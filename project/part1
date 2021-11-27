@@ -1,5 +1,6 @@
 #!/system/bin/sh
 DIRNAME=${0%/*}; VALUE_INIT="$@"; NAME=`basename $0`; chmod 777 $DIRNAME
+VERSIONCODE=20411
 grep_prop() {
   local REGEX="s/^$1=//p"
   shift
@@ -71,8 +72,8 @@ tool_files/main/xposed
 tool_files/work
 tool_files/binary
 "
-for nd in $LIST_FOLDER; do
-[ -d "$DIRNAME/$nd" ] || rm -rf "$DIRNAME/$nd"
+for ndxfiles in $LIST_FOLDER; do
+[ -d "$DIRNAME/$ndxfiles" ] || rm -rf "$DIRNAME/$ndxfiles"
 done
 }
 
