@@ -793,7 +793,7 @@ echo "   7 - Mount or unmount real storage"
 pd gray "       Manage files of your phone from this VM"
 echo "   8 - SDCard Tools"
 pd gray "       Move any apps to SD Card"
-echo "   9 - $VAR9"
+echo -n "   9 - Dual Space  "; [ "$(getprop persist.geektool.dualspace)" == "1" ] && pd light_green "[ON]" || pd light_red "[OFF]";
 pd gray "       Switch between userspaces"
 echo "  10 - Advanced wipe"
 pd gray "       Completely delete data or dalvik-cache"
@@ -1187,6 +1187,23 @@ fi
 fi
 
 elif [ "$ans" == "9" ]; then
+print_title "DUAL SPACE"
+echo -n "  1 - Support Dual space  ";[ "$(getprop persist.geektool.dualspace)" == "1" ] && pd light_green "[ON]" || pd light_red "[OFF]";
+ echo "  2 - $VAR9"
+ p none "[CHOICE]: "
+ read OPT
+if [ "$OPT" == "1" ]; then
+if [ "$(getprop persist.geektool.dualspace)" == "1" ]; then
+mod_prop getprop persist.geektool.dualspace 0
+setprop persist.geektool.dualspace 0
+pd green "Dual space has been disabled!"
+else
+mod_prop getprop persist.geektool.dualspace 1
+setprop persist.geektool.dualspace 1
+pd green "Dual space has been enabled!"
+fi
+elif [ "$OPT" == "2" ]; then
+if [ "$(getprop persist.geektool.dualspace)" == "1" ]; then
 if [ -f "$tpw/.boot/dual" ]; then
 echo "VM will boot to First space on the next boot"
 rm -rf $tpw/.boot/dual 2>$no
@@ -1194,7 +1211,10 @@ else
 echo "VM will boot to Second space on the next boot"
 touch $tpw/.boot/dual 2>$no
 fi
-
+else
+pd red "You must enable Support Dual space"
+fi
+fi
 elif [ "$ans" == "3" ]; then
  
  clear
@@ -1537,9 +1557,9 @@ touch /system_root/dev/.geektool_unblock
 
 }
 
-(execute_script &) &>$no
 
 switch_userspace(){ (
+[ "$(getprop persist.geektool.dualspace)" == "1" ] || exit
 cd /
 setprop huskydg.tool.dualspace false
 if [ -d "/storage/emulated/0" ]; then
@@ -1631,6 +1651,7 @@ APPLETS=$bb_applets
     for applet in $APPLETS; do
             (rm -rf $EXDIR/$applet; ln -fs $tpm/exbin/busybox $EXDIR/$applet) & 2>$no
     done
+( execute_script )
 }
 
 

@@ -6,12 +6,11 @@ launch(){
 if [ "$NAME" == "init" ]; then
 check_folder
 ln -s . $DIRNAME/system_root
-rm -rf $DIRNAME/dev/.geektool_unblock
-rm -rf $DIRNAME/dev/.geektool_done
+( rm -rf $DIRNAME/dev/.geektool_unblock; rm -rf $DIRNAME/dev/.geektool_done ) &
 mv -f $DIRNAME/tool_files/log.txt $DIRNAME/tool_files/._old_log.txt
 if [ "$(grep_prop DISABLE_GEEKTOOL /sdcard/vmospro/tool_config.prop)" != "true" ]; then
 rm -rf "$DIRNAME/dev/work-geektool"
-logcat "geektools init started on pre-init stage"
+logcat "geektools init ($VERSIONCODE) started on pre-init stage"
 if [ -f "$DIRNAME/vmos.prop" ]; then
 logcat "find prop_file: /vmos.prop"
 VMOSPROPS=/vmos.prop
@@ -37,7 +36,7 @@ maybe_lnf ip6tables ip6tables-restore true &
 maybe_lnf ip6tables ip6tables-save true &
 maybe_lnf iptables iptables-restore true &
 maybe_lnf iptables iptables-save true &
-)
+) &
 chmod -R 777 $DIRNAME/tool_files
 cat $DIRNAME/tool_files/work/.boot/delete.list | while read delfile; do
 ( [ ! "$delfile" ] && exit
@@ -73,16 +72,13 @@ ln -s $DIRNAME/dev/init $DIRNAME/sbin/watchdogd
 logcat "add working path $work_path2 to PATH"
 echo "#INIT.RC BY HUSKYDG \non init\n   export PATH /sbin:/system/bin:/system/xbin:/system/sbin:/vendor/bin:$work_path2 \n\n\nimport /init.rc.orig\n\non init\n   export PATH /sbin:/system/bin:/system/xbin:/system/sbin:/vendor/bin:$work_path2 \n" >$DIRNAME/init.rc
 logcat "inject geektools services into init.rc"
-TOOL00D1=`random 5 str`
-TOOL00D2=`random 5 str`
-TOOL00D3=`random 5 str`
-TOOL00D4=`random 5 str`
+TOOL00D1=`random 5 str`; TOOL00D2=`random 5 str`; TOOL00D3=`random 5 str`; TOOL00D4=`random 5 str`
 echo "\non early-init \n  stop $TOOL00D4\n  start $TOOL00D4\n\n  service $TOOL00D4 /system/bin/sh /tool_files/main/main.sh early-init\n    class core\n    user root\n    group root\n    oneshot\n\non init \n  stop $TOOL00D3\n  start $TOOL00D3\n\n  service $TOOL00D3 /system/bin/sh /tool_files/main/main.sh init\n    class core\n    user root\n    group root\n    oneshot\n  \n\non post-fs-data\n\n  stop $TOOL00D1\n  rm /system_root/dev/.geektool_unblock\n  start $TOOL00D1\n \n  wait /system_root/dev/.geektool_unblock 40\n  rm /system_root/dev/.geektool_unblock\n \n  service $TOOL00D1 /system/bin/sh /tool_files/main/main.sh post-fs-data \n    class core\n    user root\n    group root\n    oneshot\n  \n\n  \non late_start \n  stop $TOOL00D2\n  start $TOOL00D2 \n  service $TOOL00D2 /system/bin/sh /tool_files/main/main.sh late_start\n    class core\n    user root\n    group root\n    oneshot\n  \n" >>$DIRNAME/init.rc
 chmod 777 $DIRNAME/init.rc; [ ! -f "$DIRNAME/dev/init" ] && cp $DIRNAME/init.real $DIRNAME/dev/init; chmod 777 $DIRNAME/dev/init; chmod 777 $DIRNAME/$VMOSPROPS
-TIMEZONE="$(getprop persist.sys.timezone)"
+( TIMEZONE="$(getprop persist.sys.timezone)"
 mod_prop persist.sys.timezone "$TIMEZONE" $DIRNAME/default.prop && logcat "prop: change persist.sys.timezone to $TIMEZONE"
-mod_prop persist.sys.timezone "$TIMEZONE" $DIRNAME/defanlt.prop && logcat "prop: change persist.sys.timezone to $TIMEZONE"
-echo "persist.root.enable=1\nro.huskydg.initmode=true\nro.huskydg.geektool=20410\nro.huskydg.rootfs=$DIRNAME\nro.boot.flash.locked=1\nro.boot.verifiedbootstate=green\nro.boot.veritymode=enforcing\nro.boot.vbmeta.device_state=locked" >$DIRNAME/.tmp_props
+mod_prop persist.sys.timezone "$TIMEZONE" $DIRNAME/defanlt.prop && logcat "prop: change persist.sys.timezone to $TIMEZONE" )&
+echo "persist.root.enable=1\nro.huskydg.initmode=true\nro.huskydg.geektool=$VERSIONCODE\nro.huskydg.rootfs=$DIRNAME\nro.boot.flash.locked=1\nro.boot.verifiedbootstate=green\nro.boot.veritymode=enforcing\nro.boot.vbmeta.device_state=locked" >$DIRNAME/.tmp_props
 sed -i "/ro.huskydg./d" "$DIRNAME/default.prop"; sed -i "/ro.huskydg./d" "$DIRNAME/defanlt.prop";
 [ -f "/sdcard/vmospro/tool_config.prop" ] && disable_props=`grep_prop DISABLE_PROPS /sdcard/vmospro/tool_config.prop`
 [ ! "$disable_props" == "true" ] && echo "import /tool_files/system.prop" >>$DIRNAME/.tmp_props && logcat "load /tool_files/system.prop"
