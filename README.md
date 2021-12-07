@@ -10,7 +10,7 @@ GeekTool is another Terminal Emulator app which is made for VMOS.
 
 Do modding by hijack into the virtual system.
 
-**Material icon by @ro9kie**
+**Material icon by @ro6kie**
 
 
 [More information read here!](https://huskydg.github.io/vmos/geektool)
