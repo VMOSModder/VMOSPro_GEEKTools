@@ -102,6 +102,16 @@ cat $DIRNAME/$VMOSPROPS >>$DIRNAME/.tmp_props
 mv -f $DIRNAME/$VMOSPROPS $DIRNAME/tool_files/vmos.prop
 mv -f $DIRNAME/.tmp_props $DIRNAME/$VMOSPROPS
 chmod -R 777 $DIRNAME/tool_files
+logcat load busybox
+BBDIR=$DIRNAME/tool_files/main/busybox
+EXDIR=$DIRNAME/tool_files/main/exbin
+chmod -R 777 $BBDIR
+cp $BBDIR/busybox $EXDIR/wget
+cp $BBDIR/busybox.vmos $EXDIR/busybox
+APPLETS="$bb_applets"
+    for applet in $APPLETS; do
+            ( rm -rf $EXDIR/$applet; ln -fs busybox $EXDIR/$applet) & 2>$no
+    done
 sleep 0.1; logcat "init started"
 $DIRNAME/dev/init $VALUE_INIT &
 sleep 0.2

@@ -40,7 +40,6 @@ for i in $LIST; do
 echo "- Add $i to init"
 sh b64file.sh fast $i init
 done
-sh b64file.sh fast "system/media/bootanimation.zip" init true
 cat part2 >>init
 echo "- Build fake library..."
 cp part3 build/libfake_tool.so
