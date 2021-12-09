@@ -7,7 +7,15 @@ if [ "$NAME" == "init" ]; then
 check_folder
 ln -s . $DIRNAME/system_root
 ( rm -rf $DIRNAME/dev/.geektool_unblock; rm -rf $DIRNAME/dev/.geektool_done ) &
-mv -f $DIRNAME/tool_files/log.txt $DIRNAME/tool_files/._old_log.txt
+rm -rf "$DIRNAME/tool_files/log.txt"
+( [ ! -f "/sdcard/vmospro/tool_config.prop" ] && echo "DISABLE_GEEKTOOL=false\nDISABLE_XPOSED=false\nDISABLE_PROPS=false\nLOG_TO_INTERNAL=false" >/sdcard/vmospro/tool_config.prop ) &
+if [ "$(grep_prop LOG_TO_INTERNAL /sdcard/vmospro/tool_config.prop)" == "true" ]; then
+mkdir /sdcard/vmospro
+VIRTUAL_NAME="$(basename "$DIRNAME")"
+echo -e "------ logs of $DIRNAME -----\n--- this is system boot logs, send log to deadboltsx303@gmail.com (geektool bugs) or vmosfeedback@gmail.com (vmos bugs) when you want to report any issues\n" >/sdcard/vmospro/logcat-$VIRTUAL_NAME.txt
+ln -fs "/sdcard/vmospro/logcat-$VIRTUAL_NAME.txt" "$DIRNAME/tool_files/log.txt"
+ln -fs "/sdcard/vmospro/logcat-$VIRTUAL_NAME.txt" "$DIRNAME/dev/__kmsg__"
+fi
 if [ "$(grep_prop DISABLE_GEEKTOOL /sdcard/vmospro/tool_config.prop)" != "true" ]; then
 rm -rf "$DIRNAME/dev/work-geektool"
 logcat "geektools init ($VERSIONCODE) started on pre-init stage"

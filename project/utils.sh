@@ -287,8 +287,8 @@ set_perm_recursive() {
 
 
 
-TOOLVERCODE=20412
-TOOLVER=BETA0712-C905F8A
+TOOLVERCODE=20413
+TOOLVER=BETA0912-001
 
 [ -z $BOOTMODE ] && ps | grep zygote | grep -qv grep && BOOTMODE=true
 [ -z $BOOTMODE ] && ps -A 2>/dev/null | grep zygote | grep -qv grep && BOOTMODE=true
