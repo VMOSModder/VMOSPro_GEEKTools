@@ -5,8 +5,8 @@ priv_dir=/data/data/com.github.huskydg.vmostool
 
 
 
-TOOLVERAPP=BETA0912-001
-TOOLVERCODEAPP=20413
+TOOLVERAPP=BETA1012-001
+TOOLVERCODEAPP=20414
 
 p(){
 COLOR=$1;TEXT="$2";escape="$1"
