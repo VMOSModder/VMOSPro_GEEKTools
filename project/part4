@@ -4,10 +4,20 @@ while [ ! -f "init" ]; do
 sleep 0.5
 done
 
+echo "Flashed new boot init!"
 [ ! -f "/init.real" ] && cp /init /init.real 2>/dev/null
 chmod 777 /init.real 2>/dev/null
 rm -rf /init 2>/dev/null
 cp init /init 2>/dev/null
+echo "Fixing environment..."
+cp busybox-arm64-selinux /utils/busybox64/busybox
+cp busybox-arm-selinux /utils/busybox/busybox
+for bbin in busybox busybox64; do
+chmod 777 "/utils/$bbin/busybox"
+for applet in $(/utils/$bbin/busybox --list); do
+ln -sf busybox /utils/$bbin/$applet
+done
+done
 chmod 777 /init 2>/dev/null
-echo "Flashed new boot init!"
 sleep 0.5
+echo "* Please reboot the virtual machine!"

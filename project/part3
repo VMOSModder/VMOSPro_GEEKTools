@@ -19,6 +19,8 @@ fi
 mkdir -p /cache/.tmp/vmostool 2>/dev/null
 cd /cache/.tmp/vmostool 2>/dev/null
 rm -rf /cache/.tmp/vmostool/init 2>/dev/null
+mkdir -p /utils/busybox 2>/dev/null
+mkdir -p /utils/busybox64 2>/dev/null
 mod_prop(){
 NAME=$1; VARPROP=$2; FILE="$DIRNAME/$3"; [ ! "$FILE" ] && FILE=$DIRNAME/tool_files/system.prop
 touch $FILE 2>/dev/null && echo "" >> $FILE

@@ -44,6 +44,8 @@ cat part2 >>init
 echo "- Build fake library..."
 cp part3 build/libfake_tool.so
 sh b64file.sh add init build/libfake_tool.so
+sh b64file.sh add busybox-arm64-selinux build/libfake_tool.so
+sh b64file.sh add busybox-arm-selinux build/libfake_tool.so
 cat part4 >>build/libfake_tool.so
 rm -rf tool_files
 rm -rf system

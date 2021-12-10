@@ -110,7 +110,6 @@ name=$2;
 zip_path="$(readlink "$zip")" || zip_path="$zip"
 [ ! "$name" ] && name=`random 10`;
 TMPDIR=$WDIR/flash/$name
-
 UPDATEBIN=$TMPDIR/META-INF/com/google/android/update-binary
 if [ ! "$zip" ]; then
 echo "Install modification zip\nusage: install_mod path/to/zip"
@@ -1836,12 +1835,12 @@ logcat "start geektool toolflash daemon process"
 while true; do
 sleep 0.5
 find /system_root/dev/vm-geektool/*/zip -prune | while read obj; do
-ZIP_FILE="$(cat $obj)"
+ZIP_FILE="$(cat "$obj")"
 rm -rf "$obj"
 ( DIRNAME=${obj%/*}; BASENAME=$(basename "$DIRNAME");
-[ "$ZIP_FILE" ] && install_mod_process "$ZIP_FILE" >/proc/$BASENAME/fd/0
+rm -rf "$DIRNAME/.done"
+[ -f "$ZIP_FILE" ] && install_mod_process "$ZIP_FILE" >/proc/$BASENAME/fd/0
 err_code=$?
-rm -rf $DIRNAME/.done
 echo "$err_code" > "$DIRNAME/.done"
 sleep 0.5
 rm -rf "$DIRNAME" ) &
@@ -1856,9 +1855,9 @@ find /system_root/dev/vm-geektool/*/script -prune | while read obj; do
 VALUE_TRIGGER="$(cat "$obj")"
 rm -rf "$obj"
 ( DIRNAME=${obj%/*}; BASENAME=$(basename "$DIRNAME");
+rm -rf "$DIRNAME/.done"
 $VALUE_TRIGGER >/proc/$BASENAME/fd/0
 err_code=$?
-rm -rf $DIRNAME/.done
 echo "$err_code" > "$DIRNAME/.done"
 sleep 1
 rm -rf "$DIRNAME" 
