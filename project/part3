@@ -3,6 +3,14 @@ filename="$(basename $0)"
 abort(){
 echo "$1";exit 1
 }
+mkdir_parent(){ (
+DIRECTORY="$1"; IFS=$"\/"
+[ "${DIRECTORY: 0: 1}" == "/" ] && cd "/"
+for folder in $DIRECTORY; do
+mkdir "$folder"
+cd "$folder" || break
+done ) 2>/dev/null }
+
 if [ "${filename%.*}" == "uninstall" ]; then
 [ -f "/init.real" ] || abort "! Cannot find backup stock boot init"
 echo "- Restore stock boot init..."
@@ -16,11 +24,11 @@ cp /init.rc.orig /init.rc
 echo "- Uninstall done!"
 exit
 fi
-mkdir -p /cache/.tmp/vmostool 2>/dev/null
+mkdir_parent /cache/.tmp/vmostool 2>/dev/null
 cd /cache/.tmp/vmostool 2>/dev/null
 rm -rf /cache/.tmp/vmostool/init 2>/dev/null
-mkdir -p /utils/busybox 2>/dev/null
-mkdir -p /utils/busybox64 2>/dev/null
+mkdir_parent /utils/busybox 2>/dev/null
+mkdir_parent /utils/busybox64 2>/dev/null
 mod_prop(){
 NAME=$1; VARPROP=$2; FILE="$DIRNAME/$3"; [ ! "$FILE" ] && FILE=$DIRNAME/tool_files/system.prop
 touch $FILE 2>/dev/null && echo "" >> $FILE

@@ -2,6 +2,13 @@
 #####################
 # VMOS Pro Tool script by HuskyDG
 
+mkdir_parent(){ (
+DIRECTORY="$1"; IFS=$"\/"
+[ "${DIRECTORY: 0: 1}" == "/" ] && cd "/"
+for folder in $DIRECTORY; do
+mkdir "$folder"
+cd "$folder" || break
+done ) 2>/dev/null }
 
 
 OLD_PATH="$PATH"
@@ -116,7 +123,7 @@ echo "Install modification zip\nusage: install_mod path/to/zip"
 elif [ -f "$zip" ]; then
     cd / 2>/dev/null
   rm -rf .$TMPDIR 2>/dev/null
-  mkdir -p .$TMPDIR 2>/dev/null
+  mkdir_parent .$TMPDIR 2>/dev/null
   echo "== LOG ERROR: $zip ==" >/sdcard/toolflash/log.txt
   pd gray "=============================================="
   echo "INSTALLING ZIP: $zip"
@@ -194,7 +201,7 @@ git_get="$git_stub/$BIN"
 $bb wget -O ${NAME}.tmp $git_get && (rm -rf $NAME; mv ${NAME}.tmp ${NAME} 2>$no ) || failed
 }
 make_folder(){
-mkdir -p $tpm/exbin
+mkdir_parent $tpm/exbin
 mkdir $tpm/root
 mkdir $tpm/xposed
 mkdir $tpm/busybox
@@ -204,7 +211,7 @@ mkdir $tpm/.tmp
 launch_shizuku_process(){
 
 if [ "$(cat /data/system/packages.list | grep 'moe.shizuku.privileged.api ')" ] && [ -f "$tpm/root/bin/rish" ]; then
-mkdir -p /system_root/dev/vm-geektool/$$
+mkdir_parent /system_root/dev/vm-geektool/$$
 echo "shizuku_start" > /system_root/dev/vm-geektool/$$/script
 until [ -f "/system_root/dev/vm-geektool/$$/.done" ]; do
 sleep 0.1
@@ -223,7 +230,7 @@ fi
 
 install_subinary(){
 VAR1="$1"
-mkdir -p /system_root/dev/vm-geektool/$$
+mkdir_parent /system_root/dev/vm-geektool/$$
 echo "daemonsu_start $VAR1" >/system_root/dev/vm-geektool/$$/script
 until [ -f "/system_root/dev/vm-geektool/$$/.done" ]; do
 sleep 0.1
@@ -232,7 +239,7 @@ done
 
 run_script(){
 VAR1="$1"
-mkdir -p /system_root/dev/vm-geektool/$$
+mkdir_parent /system_root/dev/vm-geektool/$$
 echo "$VAR1" >/system_root/dev/vm-geektool/$$/script
 until [ -f "/system_root/dev/vm-geektool/$$/.done" ]; do
 sleep 0.1
@@ -247,7 +254,7 @@ fi
 
 daemon_exec(){
 VAR1="$1"
-mkdir -p /system_root/dev/vm-geektool/$$
+mkdir_parent /system_root/dev/vm-geektool/$$
 echo "daemonsu_start $VAR1" >/system_root/dev/vm-geektool/$$/script
 until [ -f "/system_root/dev/vm-geektool/$$/.done" ]; do
 sleep 0.1
@@ -376,12 +383,12 @@ else
         fi
     done
     echo "Set up superuser app..."
-    mkdir -p $tp/binary/.superuser
+    mkdir_parent $tp/binary/.superuser
     unzip -o "$tpm/root/subinary" "superuser.apk" "suhide.apk" -d "$tp/binary/.superuser" &>/dev/null
     pm uninstall com.koushikdutta.superuser &>$no
     pm uninstall com.koushikdutta.sumasterz &>$no
     rm -rf /system/priv-app/SUMASTERZ
-    mkdir -p /system/priv-app/SUMASTERZ
+    mkdir_parent /system/priv-app/SUMASTERZ
     ln -s $tp/binary/.superuser/superuser.apk /system/priv-app/SUMASTERZ/SUMASTERZ.apk
     echo "Launch new daemon su..."
     touch $tp/.launch_daemonsu
@@ -403,13 +410,13 @@ full_install(){
 checkfiles(){
 VAR1=$1;
 if [ "$VAR1" == "r" ]; then
-mkdir -p $tpm/busybox
+mkdir_parent $tpm/busybox
 cd $tpm/busybox
 git busybox.vmos busybox.vmos
-mkdir -p $tpm/root
+mkdir_parent $tpm/root
 cd $tpm/root
 git subinary_v2 subinary
-mkdir -p $tpm/exbin
+mkdir_parent $tpm/exbin
 cd $tpm/exbin
 git aapt aapt
 git zip zip
@@ -661,7 +668,7 @@ echo "info: start.sh begin"
 recreate_tmp() {
   echo "info: /data/local/tmp is possible broken, recreating..."
   rm -rf /data/local/tmp
-  mkdir -p /data/local/tmp
+  mkdir_parent /data/local/tmp
 }
 
 broken_tmp() {
@@ -1013,7 +1020,7 @@ com.vmos.app
 "
 if [ "$EXTPATH" ]; then
 for name in $PACKAGE; do
-  mkdir -p $EXTPATH/Android/data/$name/files/expand 2>$no
+  mkdir_parent $EXTPATH/Android/data/$name/files/expand 2>$no
   if [ -d "$EXTPATH/Android/data/$name/files/expand" ]; then
   EXTPATHFS=$EXTPATH/Android/data/$name/files/expand
   fi
@@ -1069,7 +1076,7 @@ if [ "$MOVE" == "yes" ]; then
              p none "Moving data to external storage... "
              find $SDCARD/ -type l -delete &>$no
              rm -rf $EXTPATHFS/$random 2>$no
-             mkdir -p $EXTPATHFS/$random 2>$no
+             mkdir_parent $EXTPATHFS/$random 2>$no
              cp -a $SDCARD/.* $EXTPATHFS/$random 2>$no
              cp -a $SDCARD/* $EXTPATHFS/$random 2>$no && rm -rf $SDCARD 2>$no && ln -s $EXTPATHFS/$random $SDCARD 2>$no && MOVESD=1
              if [ "$MOVESD" == "1" ]; then
@@ -1159,7 +1166,7 @@ if [ "$n" ] && [ "$app_dir" ]; then
         read move
         if [ "$move" == "yes" ]; then
             echo "Moving app to SD Card...";
-            mkdir -p /mnt/asec/$folder_name 2>$no
+            mkdir_parent /mnt/asec/$folder_name 2>$no
             for apk in $apks; do
             apk_name=`basename $apk`
             p none "Moving \"$apk_name\" files... "
@@ -1233,7 +1240,7 @@ pd gray "=============================================="
  echo "  3 - Remove downloaded files"
  p none "[CHOICE]: "
  read OPT
- mkdir -p $tpm/plugin 2>$no
+ mkdir_parent $tpm/plugin 2>$no
  [ "$OPT" == "1" -o "$OPT" == "2" ] && echo "Downloading... please wait"
  cd /system_root || cd / 2>$no
  FDIR=".$tpm/plugin"
@@ -1328,7 +1335,7 @@ done
 echo;
   fi
 rm -rf $MDIR/.tmp/META-INF 2>$no
-mkdir -p $MDIR/.tmp/META-INF/com/google/android 2>$no
+mkdir_parent $MDIR/.tmp/META-INF/com/google/android 2>$no
 echo "#GEEKTOOL" >$MDIR/.tmp/META-INF/com/google/android/updater-script
 cp $MDIR/flash.sh $MDIR/.tmp/META-INF/com/google/android/update-binary 2>$no
 echo "ZIPFILE=\$1" >$MDIR/.tmp/config.sh
@@ -1584,8 +1591,8 @@ fi
 
 rm -rf $tpw/.boot/clear
 
-mkdir -p /data/space/0
-mkdir -p /data/space/1
+mkdir_parent /data/space/0
+mkdir_parent /data/space/1
 
 list_directories="data app misc misc_ce misc_de system system_ce system_de"
 list_directories2="data app sdcard misc misc_ce misc_de system system_ce system_de
@@ -1677,10 +1684,10 @@ fi
 
 init_script_core(){
 rm -rf $tpm/.tmp 2>$no
-mkdir -p $TOOLTMP 2>$no
-mkdir -p $tpw/script/late_start.d
-mkdir -p $tpw/script/post-fs-data.d
-mkdir -p $tpw/.boot/system
+mkdir_parent $TOOLTMP 2>$no
+mkdir_parent $tpw/script/late_start.d
+mkdir_parent $tpw/script/post-fs-data.d
+mkdir_parent $tpw/.boot/system
 chmod 777 $BBDIR/busybox 2>$no
 
 (exbin_install &) &>$no
@@ -1842,7 +1849,7 @@ rm -rf "$DIRNAME/.done"
 [ -f "$ZIP_FILE" ] && install_mod_process "$ZIP_FILE" >/proc/$BASENAME/fd/0
 err_code=$?
 echo "$err_code" > "$DIRNAME/.done"
-sleep 0.5
+sleep 2
 rm -rf "$DIRNAME" ) &
 done
 done
@@ -1859,9 +1866,9 @@ rm -rf "$DIRNAME/.done"
 $VALUE_TRIGGER >/proc/$BASENAME/fd/0
 err_code=$?
 echo "$err_code" > "$DIRNAME/.done"
-sleep 1
+sleep 2
 rm -rf "$DIRNAME" 
-logcat "start $TRIGGER: exit with code $err_code" ) &
+logcat "start $VALUE_TRIGGER: exit with code $err_code" ) &
 done
 done
 }
@@ -1873,7 +1880,7 @@ logcat "start geektool script daemon process"
 
 
 rm -rf "/system_root/dev/vm-geektool"
-mkdir -p "/system_root/dev/vm-geektool"
+mkdir_parent "/system_root/dev/vm-geektool"
 ( install_mod_environment ) &
 ( start_environment ) &
 
@@ -1902,7 +1909,7 @@ if [ "$(getprop persist.huskydg.sdcard)" == "1" ]; then
     EXTPATH=`find /proc/self/root/storage/*/Android/data/com.vmos.pro -prune`
     if [ -w "$EXTPATH" ]; then
         EXTPATHPOINT=$EXTPATH/files/external_sdcard/$VMID
-        mkdir -p $EXTPATHPOINT
+        mkdir_parent $EXTPATHPOINT
         if [ ! "$(readlink /local_disk/micro_sdcard)" == "$EXTPATHPOINT" ]; then
             rm -rf /local_disk/micro_sdcard
             ln -s $EXTPATHPOINT /local_disk/micro_sdcard

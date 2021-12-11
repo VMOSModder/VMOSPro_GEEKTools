@@ -1,6 +1,7 @@
 #!/system/bin/sh
 # util_functions for terminal
 # 
+
 RDIR=/tool_files
 MDIR=/tool_files/main
 WDIR=/tool_files/work
@@ -13,6 +14,15 @@ VMOS_ROOT_DIR=`getprop ro.huskydg.rootfs`
 ROOTFS=$VMOS_ROOT_DIR
 ROOTFS2=/proc/self/root/$ROOTFS
 no=/dev/null
+
+
+mkdir_parent(){ (
+DIRECTORY="$1"; IFS=$"\/"
+[ "${DIRECTORY: 0: 1}" == "/" ] && cd "/"
+for folder in $DIRECTORY; do
+mkdir "$folder"
+cd "$folder" || break
+done ) 2>/dev/null }
 
 cd2(){
 DIR=$1; [ ! "$DIR" ] && DIR="$HOME"; cd "$ROOTFS2/$(readlink -f "$DIR")"
@@ -70,7 +80,7 @@ name=$2;
 ZIPPATH="$(realpath "$ZIPFILE")" || ZIPPATH="$(readlink -f "$ZIPFILE")" || ZIPPATH="$ZIPFILE"
   ZIPFILE="$ZIPPATH"
 rm -rf "/system_root/dev/vm-geektool/$current_pid/"
-mkdir -p "/system_root/dev/vm-geektool/$current_pid/"
+mkdir_parent "/system_root/dev/vm-geektool/$current_pid/"
 echo "$ZIPFILE" >>/system_root/dev/vm-geektool/$current_pid/zip
 until isf "/system_root/dev/vm-geektool/$current_pid/.done"; do
 sleep 0.5
@@ -152,7 +162,7 @@ abort(){
 
 
 mktouch(){
-  mkdir -p ${1%/*} 2>/dev/null
+  mkdir_parent ${1%/*} 2>/dev/null
   [ -z $2 ] && touch $1 || echo $2 > $1
   chmod 644 $1
 }
